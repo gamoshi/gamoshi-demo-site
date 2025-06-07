@@ -30,8 +30,6 @@
     <h2>Live Configuration:</h2>
     <h3>Prebid AdUnits:</h3>
     <pre id="prebidConfigOutput"></pre>
-    <h3>Gamoshi $gambid Config:</h3>
-    <pre id="gamoshiConfigOutput"></pre>
     <hr>
 
     <!-- Prebid.js and Gamoshi Adapter integration scripts -->
@@ -86,24 +84,6 @@
         document.getElementById('prebidConfigOutput').textContent = JSON.stringify(adUnits, null, 2);
       });
     </script>
-    <!-- Gamoshi script integration -->
-    <script type="application/javascript">
-      window.$gambid = {
-        rtb: "https://rtb.gamoshi.io/r/" + supplyPartnerIdFromUrl + "/bidr", // Dynamically set rtb URL
-        bidParams: {
-          adtype: "banner",
-          adh: adHeightFromUrl, // Use dynamic height
-          adw: adWidthFromUrl, // Use dynamic width
-          secure: 0,
-          purl: purlFromUrl, // Use value from URL or default
-          bidfloor: 0.02,
-        },
-        placement: "gamoshi-ad-slot"
-      };
-      // Display Gamoshi config
-      document.getElementById('gamoshiConfigOutput').textContent = JSON.stringify(window.$gambid, null, 2);
-    </script>
-    <script type="text/javascript" src="https://s.gamx.io/tag/latest"></script>
   </main>
 </body>
 </html>

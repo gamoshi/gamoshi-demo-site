@@ -32,14 +32,11 @@
 
     <hr>
     <h2>Live Configuration:</h2>
-    <h3>Prebid AdUnits:</h3>
-    <pre id="prebidConfigOutput"></pre>
     <h3>Standalone Gamoshi Script Config ($gambid):</h3>
     <pre id="gamoshiConfigOutput"></pre>
     <hr>
 
-    <!-- Prebid.js and Gamoshi Adapter integration scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/prebid.js"></script>
+    <!-- Gamoshi script integration -->
     <script type="application/javascript">
       // Function to get URL parameters
       function getUrlParameter(name) {
@@ -63,36 +60,6 @@
         adSlotDiv.style.height = `${adHeightFromUrl}px`;
       }
 
-      var adUnits = [{
-        code: 'ad-slot-1',
-        mediaTypes: {
-          banner: {
-            sizes: [[adWidthFromUrl, adHeightFromUrl]] // Use dynamic width and height
-          }
-        },
-        bids: [{
-          bidder: 'gamoshi',
-          params: {
-            supplyPartnerId: supplyPartnerIdFromUrl, // Use value from URL or default
-            placementId: 'ad-slot-1',
-            // Add other Gamoshi params as needed
-          }
-        }]
-      }];
-      pbjs.que = pbjs.que || [];
-      pbjs.que.push(function() {
-        pbjs.addAdUnits(adUnits);
-        pbjs.requestBids({
-          bidsBackHandler: function() {
-            pbjs.renderAd(document, pbjs.getHighestCpmBids('ad-slot-1')[0].adId);
-          }
-        });
-        // Display Prebid config
-        document.getElementById('prebidConfigOutput').textContent = JSON.stringify(adUnits, null, 2);
-      });
-    </script>
-    <!-- Gamoshi script integration -->
-    <script type="application/javascript">
       window.$gambid = {
         rtb: "https://rtb.gamoshi.io/r/" + supplyPartnerIdFromUrl + "/bidr", // Dynamically set rtb URL based on supply_partner_id
         bidParams: {
@@ -101,7 +68,6 @@
           adw: adWidthFromUrl, // Use dynamic width
           purl: purlFromUrl, // Use value from URL or default
           bidfloor: 0.02,
-          // Consider if supply_partner_id also needs to be set here directly if not derived from rtb path
         },
         placement: "ad-slot-1"
       };
