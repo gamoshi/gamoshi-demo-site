@@ -29,6 +29,15 @@
       <h3>More Content</h3>
       <p>Aliquam erat volutpat. Etiam ac eros euismod, dictum erat at, cursus erat. Suspendisse potenti.</p>
     </section>
+
+    <hr>
+    <h2>Live Configuration:</h2>
+    <h3>Prebid AdUnits:</h3>
+    <pre id="prebidConfigOutput"></pre>
+    <h3>Gamoshi $gambid Config:</h3>
+    <pre id="gamoshiConfigOutput"></pre>
+    <hr>
+
     <!-- Prebid.js and Gamoshi Adapter integration scripts -->
     <script src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/prebid.js"></script>
     <script type="application/javascript">
@@ -78,6 +87,8 @@
             pbjs.renderAd(document, pbjs.getHighestCpmBids('ad-slot-1')[0].adId);
           }
         });
+        // Display Prebid config
+        document.getElementById('prebidConfigOutput').textContent = JSON.stringify(adUnits, null, 2);
       });
     </script>
     <!-- Gamoshi script integration -->
@@ -94,6 +105,8 @@
         },
         placement: "ad-slot-1"
       };
+      // Display Gamoshi config
+      document.getElementById('gamoshiConfigOutput').textContent = JSON.stringify(window.$gambid, null, 2);
     </script>
     <script type="text/javascript" src="https://s.gamx.io/tag/latest"></script>
   </main>
