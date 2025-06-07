@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Demo - Gamoshi Conversion Integration</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 600px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    .product { display: flex; align-items: center; margin-bottom: 2rem; }
+    .product-img { width: 120px; height: 120px; background: #eee; border-radius: 8px; margin-right: 2rem; display: flex; align-items: center; justify-content: center; color: #888; font-size: 1.2rem; }
+    .product-info { flex: 1; }
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    label { font-weight: bold; }
+    input, button { padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #007bff; color: #fff; border: none; cursor: pointer; }
+    button:active { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sample Merchant Site</h1>
+    <p>Gamoshi Conversion Script Integration Demo</p>
+  </header>
+  <main>
+    <div class="product">
+      <div class="product-img">Product Image</div>
+      <div class="product-info">
+        <h2>Demo Product</h2>
+        <p>Price: $19.99</p>
+      </div>
+    </div>
+    <form id="purchase-form">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+      <button type="submit">Buy Now</button>
+    </form>
+    <div id="confirmation" style="display:none; margin-top:2rem; color:green; font-weight:bold;">Thank you for your purchase!</div>
+    <!-- Gamoshi conversion script integration -->
+    <script>
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      // Get parameters from URL or use defaults
+      var conversionId = getUrlParameter('id') || 62; // Default ID
+      var conversionUuid = getUrlParameter('uuid') || 'e92ce6c4-94f0-4fa9-a1fb-6e1f2a5d8593'; // Default UUID
+      var conversionBidderHost = getUrlParameter('bidder_host') || 'rtb.infolinks.com'; // Default Bidder Host
+      var conversionPurl = getUrlParameter('purl') || window.location.href; // Default PURL, though not in original script, it's a common param
+
+      window.g_conversion_tracking = {
+        id: parseInt(conversionId), // Ensure id is an integer
+        debug: true,
+        uuid: conversionUuid,
+        bidder_host: conversionBidderHost,
+        event_mode: true
+        // purl: conversionPurl, // You might want to add purl here if needed by the conversion script
+      };
+    </script>
+    <script src="https://rtb.infolinks.com/static/conv-loader.js"></script>
+    <script>
+      document.getElementById('purchase-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('confirmation').style.display = 'block';
+        // Optionally, you can trigger the conversion script here if needed
+      });
+    </script>
+  </main>
+</body>
+</html>
+

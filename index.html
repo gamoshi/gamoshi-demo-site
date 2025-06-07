@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gamoshi Demo Pages - Control Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+    .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1, h2 { color: #333; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input[type="text"], select { width: calc(100% - 22px); padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd; box-sizing: border-box; }
+    button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 20px; }
+    button:hover { background-color: #0056b3; }
+    .links-section, .controls-section { margin-bottom: 30px; }
+    .links-section a { display: block; margin-bottom: 8px; color: #007bff; text-decoration: none; }
+    .links-section a:hover { text-decoration: underline; }
+    hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gamoshi Test Site Control Panel</h1>
+
+    <div class="links-section">
+      <h2>Direct Demo Links</h2>
+      <a href="demos/script-integration.html" target="_blank">Publisher Demo (Script Integration)</a>
+      <a href="demos/gamoshi-prebid.html" target="_blank">Publisher Demo (Gamoshi-Prebid)</a>
+      <a href="demos/merchant.html" target="_blank">Merchant Demo (Conversion)</a>
+    </div>
+
+    <hr>
+
+    <div class="controls-section">
+      <h2>Open Demo with Custom Parameters</h2>
+
+      <label for="demoPage">Select Demo Page:</label>
+      <select id="demoPage" onchange="toggleConversionFields()">
+        <option value="demos/script-integration.html">Publisher Demo (Script Integration)</option>
+        <option value="demos/gamoshi-prebid.html">Publisher Demo (Gamoshi-Prebid)</option>
+        <option value="demos/merchant.html">Merchant Demo (Conversion)</option>
+      </select>
+
+      <label for="supply_partner_id">Supply Partner ID (supply_partner_id):</label>
+      <input type="text" id="supply_partner_id" placeholder="e.g., 27058">
+
+      <label for="purl">Page URL (purl):</label>
+      <input type="text" id="purl" placeholder="e.g., https://example.com/page" value="https://www.gamoshi.io/test_page">
+
+      <label for="adw">Ad Width (adw):</label>
+      <input type="text" id="adw" placeholder="e.g., 300 (for publisher demos)" value="300">
+
+      <label for="adh">Ad Height (adh):</label>
+      <input type="text" id="adh" placeholder="e.g., 250 (for publisher demos)" value="250">
+
+      <div id="conversionParams" style="display: none;">
+        <label for="conversion_id">Conversion ID (id):</label>
+        <input type="text" id="conversion_id" placeholder="e.g., 62">
+
+        <label for="conversion_uuid">Conversion UUID (uuid):</label>
+        <input type="text" id="conversion_uuid" placeholder="e.g., e92ce6c4-xxxx">
+
+        <label for="conversion_bidder_host">Conversion Bidder Host (bidder_host):</label>
+        <input type="text" id="conversion_bidder_host" placeholder="e.g., rtb.infolinks.com">
+      </div>
+
+      <button onclick="openDemoWithParams()">Open Demo with Parameters</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleConversionFields() {
+      const selectedPage = document.getElementById('demoPage').value;
+      const conversionParamsDiv = document.getElementById('conversionParams');
+      if (selectedPage === 'demos/merchant.html') {
+        conversionParamsDiv.style.display = 'block';
+      } else {
+        conversionParamsDiv.style.display = 'none';
+      }
+    }
+
+    function openDemoWithParams() {
+      const selectedPage = document.getElementById('demoPage').value;
+      if (!selectedPage) {
+        alert('Please select a demo page.');
+        return;
+      }
+
+      let baseUrl = selectedPage;
+      const params = new URLSearchParams();
+
+      const supplyPartnerId = document.getElementById('supply_partner_id').value;
+      if (supplyPartnerId) params.append('supply_partner_id', supplyPartnerId);
+
+      const purl = document.getElementById('purl').value;
+      if (purl) params.append('purl', purl);
+
+      const adw = document.getElementById('adw').value;
+      if (adw) params.append('adw', adw);
+
+      const adh = document.getElementById('adh').value;
+      if (adh) params.append('adh', adh);
+
+      if (selectedPage === 'demos/merchant.html') {
+        const conversionId = document.getElementById('conversion_id').value;
+        if (conversionId) params.append('id', conversionId);
+
+        const conversionUuid = document.getElementById('conversion_uuid').value;
+        if (conversionUuid) params.append('uuid', conversionUuid);
+
+        const conversionBidderHost = document.getElementById('conversion_bidder_host').value;
+        if (conversionBidderHost) params.append('bidder_host', conversionBidderHost);
+      }
+
+      const queryString = params.toString();
+      const finalUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
+      window.open(finalUrl, '_blank');
+    }
+
+    // Initialize field visibility on page load
+    document.addEventListener('DOMContentLoaded', toggleConversionFields);
+  </script>
+</body>
+</html>
+

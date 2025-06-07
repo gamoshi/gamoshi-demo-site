@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publisher Demo - Gamoshi Prebid Integration</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 900px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    .ad-slot { /* Default width and height, will be overridden by JS */ width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; margin: 2rem auto; font-size: 1.2rem; color: #888; }
+    .content { margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sample Publisher Content Site</h1>
+    <p>Gamoshi Prebid Adapter & Script Integration Demo</p>
+  </header>
+  <main>
+    <section class="content">
+      <h2>Welcome to Our News Article</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod, urna eu tincidunt consectetur, nisi nisl aliquam enim, eget facilisis enim erat nec sem.</p>
+    </section>
+    <div class="ad-slot" id="ad-slot-1">
+      Ad Slot 300x250
+    </div>
+    <section class="content">
+      <h3>More Content</h3>
+      <p>Aliquam erat volutpat. Etiam ac eros euismod, dictum erat at, cursus erat. Suspendisse potenti.</p>
+    </section>
+    <!-- Prebid.js and Gamoshi Adapter integration scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/prebid.js"></script>
+    <script type="application/javascript">
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      // Get parameters from URL or use defaults
+      var supplyPartnerIdFromUrl = getUrlParameter('supply_partner_id') || '27058'; // Default Supply Partner ID
+      var purlFromUrl = getUrlParameter('purl') || window.location.href; // Default PURL
+      var adWidthFromUrl = parseInt(getUrlParameter('adw')) || 300; // Default Ad Width
+      var adHeightFromUrl = parseInt(getUrlParameter('adh')) || 250; // Default Ad Height
+
+      // Update ad slot placeholder text and style
+      const adSlotDiv = document.getElementById('ad-slot-1');
+      if (adSlotDiv) {
+        adSlotDiv.textContent = `Ad Slot ${adWidthFromUrl}x${adHeightFromUrl}`;
+        adSlotDiv.style.width = `${adWidthFromUrl}px`;
+        adSlotDiv.style.height = `${adHeightFromUrl}px`;
+      }
+
+      var adUnits = [{
+        code: 'ad-slot-1',
+        mediaTypes: {
+          banner: {
+            sizes: [[adWidthFromUrl, adHeightFromUrl]] // Use dynamic width and height
+          }
+        },
+        bids: [{
+          bidder: 'gamoshi',
+          params: {
+            supplyPartnerId: supplyPartnerIdFromUrl, // Use value from URL or default
+            placementId: 'ad-slot-1',
+            // Add other Gamoshi params as needed
+          }
+        }]
+      }];
+      pbjs.que = pbjs.que || [];
+      pbjs.que.push(function() {
+        pbjs.addAdUnits(adUnits);
+        pbjs.requestBids({
+          bidsBackHandler: function() {
+            pbjs.renderAd(document, pbjs.getHighestCpmBids('ad-slot-1')[0].adId);
+          }
+        });
+      });
+    </script>
+    <!-- Gamoshi script integration -->
+    <script type="application/javascript">
+      window.$gambid = {
+        rtb: "https://rtb.gamoshi.io/r/" + supplyPartnerIdFromUrl + "/bidr", // Dynamically set rtb URL based on supply_partner_id
+        bidParams: {
+          adtype: "banner",
+          adh: adHeightFromUrl, // Use dynamic height
+          adw: adWidthFromUrl, // Use dynamic width
+          purl: purlFromUrl, // Use value from URL or default
+          bidfloor: 0.02,
+          // Consider if supply_partner_id also needs to be set here directly if not derived from rtb path
+        },
+        placement: "ad-slot-1"
+      };
+    </script>
+    <script type="text/javascript" src="https://s.gamx.io/tag/latest"></script>
+  </main>
+</body>
+</html>
+

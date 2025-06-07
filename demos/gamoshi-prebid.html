@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gamoshi Prebid Integration Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 900px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    .ad-slot { width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; margin: 2rem auto; font-size: 1.2rem; color: #888; }
+    .content { margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gamoshi Prebid Integration Demo</h1>
+    <p>This page demonstrates a basic Prebid.js setup with the Gamoshi adapter.</p>
+  </header>
+  <main>
+    <section class="content">
+      <h2>Sample Ad Placement</h2>
+      <p>This is a demonstration of a 300x250 ad slot using Prebid.js and the Gamoshi adapter.</p>
+    </section>
+    <div class="ad-slot" id="gamoshi-ad-slot">
+      Ad Slot 300x250
+    </div>
+    <!-- Prebid.js and Gamoshi Adapter integration scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/prebid.js"></script>
+    <script type="application/javascript">
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      // Get parameters from URL or use defaults
+      var supplyPartnerIdFromUrl = getUrlParameter('supply_partner_id') || '27058'; // Default Supply Partner ID
+      var purlFromUrl = getUrlParameter('purl') || window.location.href; // Default PURL
+
+      var adUnits = [{
+        code: 'gamoshi-ad-slot',
+        mediaTypes: {
+          banner: {
+            sizes: [[300, 250]]
+          }
+        },
+        bids: [{
+          bidder: 'gamoshi',
+          params: {
+            supplyPartnerId: supplyPartnerIdFromUrl, // Use value from URL or default
+            placementId: 'gamoshi-ad-slot',
+          }
+        }]
+      }];
+      pbjs.que = pbjs.que || [];
+      pbjs.que.push(function() {
+        pbjs.addAdUnits(adUnits);
+        pbjs.requestBids({
+          bidsBackHandler: function() {
+            pbjs.renderAd(document, pbjs.getHighestCpmBids('gamoshi-ad-slot')[0].adId);
+          }
+        });
+      });
+    </script>
+    <!-- Gamoshi script integration -->
+    <script type="application/javascript">
+      window.$gambid = {
+        rtb: "https://rtb.gamoshi.io/r/" + supplyPartnerIdFromUrl + "/bidr", // Dynamically set rtb URL
+        bidParams: {
+          adtype: "banner",
+          adh: 250,
+          adw: 300,
+          secure: 0,
+          purl: purlFromUrl, // Use value from URL or default
+          bidfloor: 0.02,
+        },
+        placement: "gamoshi-ad-slot"
+      };
+    </script>
+    <script type="text/javascript" src="https://s.gamx.io/tag/latest"></script>
+  </main>
+</body>
+</html>
+
