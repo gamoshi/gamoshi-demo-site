@@ -8,7 +8,7 @@
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
     header { background: #222; color: #fff; padding: 1rem; text-align: center; }
     main { max-width: 900px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
-    .ad-slot { width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; margin: 2rem auto; font-size: 1.2rem; color: #888; }
+    .ad-slot { /* Default width and height, will be overridden by JS */ width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; margin: 2rem auto; font-size: 1.2rem; color: #888; }
     .content { margin-bottom: 2rem; }
   </style>
 </head>
@@ -39,12 +39,22 @@
       // Get parameters from URL or use defaults
       var supplyPartnerIdFromUrl = getUrlParameter('supply_partner_id') || '27058'; // Default Supply Partner ID
       var purlFromUrl = getUrlParameter('purl') || window.location.href; // Default PURL
+      var adWidthFromUrl = parseInt(getUrlParameter('adw')) || 300; // Default Ad Width
+      var adHeightFromUrl = parseInt(getUrlParameter('adh')) || 250; // Default Ad Height
+
+      // Update ad slot placeholder text and style
+      const adSlotDiv = document.getElementById('gamoshi-ad-slot');
+      if (adSlotDiv) {
+        adSlotDiv.textContent = `Ad Slot ${adWidthFromUrl}x${adHeightFromUrl}`;
+        adSlotDiv.style.width = `${adWidthFromUrl}px`;
+        adSlotDiv.style.height = `${adHeightFromUrl}px`;
+      }
 
       var adUnits = [{
         code: 'gamoshi-ad-slot',
         mediaTypes: {
           banner: {
-            sizes: [[300, 250]]
+            sizes: [[adWidthFromUrl, adHeightFromUrl]] // Use dynamic width and height
           }
         },
         bids: [{
@@ -71,8 +81,8 @@
         rtb: "https://rtb.gamoshi.io/r/" + supplyPartnerIdFromUrl + "/bidr", // Dynamically set rtb URL
         bidParams: {
           adtype: "banner",
-          adh: 250,
-          adw: 300,
+          adh: adHeightFromUrl, // Use dynamic height
+          adw: adWidthFromUrl, // Use dynamic width
           secure: 0,
           purl: purlFromUrl, // Use value from URL or default
           bidfloor: 0.02,
