@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StarTech Demo Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 900px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    .ad-slot { width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; margin: 2rem auto; font-size: 1.2rem; color: #888; }
+    .content { margin-bottom: 2rem; }
+    .info { background: #f0f8ff; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+    pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>StarTech Demo Page</h1>
+    <p>Demonstrates Prebid.js with Gamoshi RTB endpoint.</p>
+  </header>
+  <main>
+    <section class="content">
+      <h2>Sample Ad Placement</h2>
+      <p>This is a demonstration of a 300x250 ad slot using Prebid.js with the StarTech configuration.</p>
+      <div class="info">
+        <strong>Endpoint:</strong> https://372.bidder.gamx.io/r/27879/bidr<br>
+        <strong>Banner Size:</strong> 300x250
+      </div>
+    </section>
+
+    <div class="ad-slot" id="sgamoshi-ad-slot">
+      Ad Slot 300x250
+    </div>
+
+    <hr>
+    <h2>Live Configuration:</h2>
+    <h3>Prebid AdUnits:</h3>
+    <pre id="prebidConfigOutput"></pre>
+    <hr>
+
+    <!-- Prebid.js integration -->
+    <!-- Load Prebid.js library first -->
+    <script src="https://cdn.jsdelivr.net/npm/prebid.js@10.8.0/dist/not-for-prod/prebid.min.js"></script>
+
+    <script type="application/javascript">
+      // Initialize Prebid queue
+      var pbjs = pbjs || {};
+      pbjs.que = pbjs.que || [];
+
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      // Get parameters from URL or use defaults
+      var supplyPartnerId = getUrlParameter('supply_partner_id') || '27879';
+      var adWidth = parseInt(getUrlParameter('adw')) || 300;
+      var adHeight = parseInt(getUrlParameter('adh')) || 250;
+
+      // Update ad slot placeholder text and style
+      const adSlotDiv = document.getElementById('sgamoshi-ad-slot');
+      if (adSlotDiv) {
+        adSlotDiv.textContent = `Ad Slot ${adWidth}x${adHeight}`;
+        adSlotDiv.style.width = `${adWidth}px`;
+        adSlotDiv.style.height = `${adHeight}px`;
+      }
+
+      var adUnits = [{
+        code: 'sgamoshi-ad-slot',
+        mediaTypes: {
+          banner: {
+            sizes: [[adWidth, adHeight]]
+          }
+        },
+        bids: [{
+          bidder: 'gamoshi',
+          params: {
+            supplyPartnerId: supplyPartnerId,
+            rtbEndpoint: 'https://372.bidder.gamx.io',
+            placementId: 'sgamoshi-ad-slot'
+          }
+        }]
+      }];
+
+      // Add to Prebid queue
+      pbjs.que.push(function() {
+        pbjs.addAdUnits(adUnits);
+        pbjs.requestBids({
+          bidsBackHandler: function() {
+            var bids = pbjs.getHighestCpmBids('sgamoshi-ad-slot');
+            if (bids && bids.length > 0) {
+              console.log('Bid received:', bids[0]);
+              // Create an iframe for the ad
+              var adSlot = document.getElementById('sgamoshi-ad-slot');
+              var iframe = document.createElement('iframe');
+              iframe.width = adWidth;
+              iframe.height = adHeight;
+              iframe.frameBorder = 0;
+              iframe.scrolling = 'no';
+              adSlot.innerHTML = '';
+              adSlot.appendChild(iframe);
+
+              // Render ad into iframe
+              var iframeDoc = iframe.contentWindow.document;
+              pbjs.renderAd(iframeDoc, bids[0].adId);
+            } else {
+              console.log('No bids returned');
+              document.getElementById('sgamoshi-ad-slot').innerHTML = '<div style="color: #999; padding: 2rem;">No ad returned</div>';
+            }
+          }
+        });
+
+        // Display Prebid config
+        document.getElementById('prebidConfigOutput').textContent = JSON.stringify(adUnits, null, 2);
+      });
+    </script>
+  </main>
+</body>
+</html>

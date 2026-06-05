@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celtra Ad Test — Event Monitor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ================================================================
+       TWO-COLUMN ROOT LAYOUT
+    ================================================================ */
+    .layout {
+      display: grid;
+      grid-template-columns: 40% 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ================================================================
+       LEFT PANEL — dark sidebar
+    ================================================================ */
+    .left-panel {
+      background: #0d1117;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid #21262d;
+    }
+
+    /* Sidebar brand strip */
+    .left-brand {
+      flex-shrink: 0;
+      padding: 0.85rem 1.1rem 0.8rem;
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .left-brand h1 { font-size: 0.9rem; font-weight: 700; color: #c9d1d9; letter-spacing: 0.2px; }
+    .left-brand p  { font-size: 0.7rem; color: #484f58; margin-top: 0.1rem; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,230,118,0.07);
+      color: #00e676;
+      border: 1px solid rgba(0,230,118,0.22);
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .status-pill::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #00e676;
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ---- Collapsible cards (tag input + macros) ---- */
+    .left-top {
+      flex-shrink: 0;
+      overflow-y: auto;
+      max-height: 360px;
+    }
+    .left-top::-webkit-scrollbar { width: 4px; }
+    .left-top::-webkit-scrollbar-thumb { background: #21262d; border-radius: 2px; }
+
+    details.lcard { border-bottom: 1px solid #21262d; }
+    details.lcard summary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.1rem;
+      background: #0d1117;
+      color: #6e7681;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.15s, background 0.15s;
+    }
+    details.lcard summary:hover { color: #8b949e; background: #161b22; }
+    details.lcard summary::marker,
+    details.lcard summary::-webkit-details-marker { display: none; }
+    details.lcard summary::before {
+      content: '▶';
+      font-size: 0.5rem;
+      opacity: 0.4;
+      transition: transform 0.15s;
+    }
+    details.lcard[open] summary::before { transform: rotate(90deg); }
+    details.lcard[open] summary { color: #8b949e; }
+
+    .lcard-body { padding: 0.85rem 1.1rem 1rem; }
+
+    /* Tag textarea */
+    .tag-textarea {
+      width: 100%;
+      height: 120px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.68rem;
+      background: #0a0e14;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+      color: #8b949e;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+      display: block;
+      margin-bottom: 0.65rem;
+    }
+    .tag-textarea:focus { border-color: #58a6ff; color: #c9d1d9; }
+    .tag-textarea::placeholder { color: #30363d; }
+
+    .tag-row { display: flex; align-items: center; gap: 0.65rem; }
+    .btn-load {
+      background: #238636;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-load:hover { background: #2ea043; }
+    #tag-status { font-size: 0.7rem; color: #484f58; }
+
+    /* Macro grid */
+    .macro-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .macro-row {
+      display: flex;
+      gap: 0.5rem;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.67rem;
+      background: #161b22;
+      border-radius: 5px;
+      padding: 0.35rem 0.55rem;
+      align-items: flex-start;
+      border: 1px solid #21262d;
+    }
+    .macro-row .k { color: #f47067; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .macro-row .v { color: #484f58; word-break: break-all; }
+
+    /* ---- Ad Events log (flex-grow) ---- */
+    .event-log {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid #21262d;
+    }
+    .log-head {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1.1rem;
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+    }
+    .log-title {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: #c9d1d9;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .log-count {
+      background: #1f6feb;
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 0.12rem 0.45rem;
+      border-radius: 8px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .log-legend {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.65rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.28rem; color: #6e7681; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-impression { background: #58a6ff; }
+    .dot-click      { background: #f78166; }
+    .dot-custom     { background: #3fb950; }
+
+    .log-actions { display: flex; gap: 0.4rem; }
+    .btn-clear {
+      background: transparent;
+      border: 1px solid #21262d;
+      color: #484f58;
+      padding: 0.25rem 0.65rem;
+      border-radius: 5px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-clear:hover { border-color: #8b949e; color: #8b949e; }
+
+    .log-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0.4rem 0.5rem;
+    }
+    .log-body::-webkit-scrollbar { width: 4px; }
+    .log-body::-webkit-scrollbar-thumb { background: #21262d; border-radius: 2px; }
+
+    .log-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 100px;
+      color: #30363d;
+      font-size: 0.78rem;
+      text-align: center;
+      gap: 0.4rem;
+    }
+    .log-empty .icon { font-size: 1.6rem; opacity: 0.35; }
+    .log-empty .sub  { font-size: 0.67rem; color: #21262d; }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 88px 120px 1fr;
+      gap: 0 0.55rem;
+      align-items: baseline;
+      padding: 0.4rem 0.55rem;
+      border-radius: 4px;
+      border-left: 2px solid transparent;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.69rem;
+      animation: fadeIn 0.18s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-2px)} to{opacity:1;transform:translateY(0)} }
+    .log-entry:hover { background: #161b22; }
+
+    .log-entry.type-impression { border-color: #1f6feb; }
+    .log-entry.type-click      { border-color: #da3633; }
+    .log-entry.type-custom     { border-color: #2ea043; }
+    .log-entry.type-other      { border-color: #21262d; }
+
+    .log-time  { color: #30363d; }
+    .log-badge {
+      font-size: 0.6rem; font-weight: 700;
+      padding: 0.1rem 0.35rem; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 0.3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .type-impression .log-badge { background: rgba(31,111,235,0.15); color: #58a6ff; }
+    .type-click      .log-badge { background: rgba(218,54,51,0.15);  color: #f78166; }
+    .type-custom     .log-badge { background: rgba(46,160,67,0.15);  color: #3fb950; }
+    .type-other      .log-badge { background: rgba(139,148,158,0.1); color: #6e7681; }
+    .log-url { color: #6e7681; word-break: break-all; line-height: 1.35; }
+    .log-url .url-host { color: #8b949e; }
+
+    /* ---- Celtra bg log (fixed at bottom) ---- */
+    .bg-log-section {
+      flex-shrink: 0;
+      height: 175px;
+      display: flex;
+      flex-direction: column;
+    }
+    .bg-log-head {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.1rem;
+      background: #0d1117;
+      border-top: 1px solid #21262d;
+      border-bottom: 1px solid #21262d;
+    }
+    .bg-log-title {
+      flex: 1;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .bg-count {
+      background: #161b22;
+      color: #484f58;
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 7px;
+      min-width: 16px;
+      text-align: center;
+    }
+    .bg-clear {
+      background: transparent; border: none;
+      color: #21262d; font-size: 0.65rem;
+      cursor: pointer; font-family: inherit;
+      padding: 0.1rem 0.3rem; border-radius: 3px;
+      transition: color 0.15s;
+    }
+    .bg-clear:hover { color: #484f58; }
+
+    .bg-log-body {
+      flex: 1; min-height: 0;
+      overflow-y: auto;
+      padding: 0.3rem 0.4rem;
+      background: #0a0e14;
+    }
+    .bg-log-body::-webkit-scrollbar { width: 3px; }
+    .bg-log-body::-webkit-scrollbar-thumb { background: #1c2128; }
+
+    .bg-entry {
+      display: grid;
+      grid-template-columns: 82px 100px 1fr;
+      gap: 0 0.45rem;
+      padding: 0.22rem 0.45rem;
+      border-radius: 3px;
+      border-left: 2px solid #1c2128;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.63rem;
+    }
+    .bg-entry:hover { background: #0f1318; }
+    .bg-entry .bg-time  { color: #21262d; }
+    .bg-entry .bg-badge { color: #30363d; font-weight: 600; text-transform: uppercase; font-size: 0.58rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bg-entry .bg-url   { color: #21262d; word-break: break-all; }
+    .bg-entry .bg-url .url-host { color: #30363d; }
+
+    /* ================================================================
+       RIGHT PANEL — simulated page preview
+    ================================================================ */
+    .right-panel {
+      background: #f5f6f8;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .right-panel::-webkit-scrollbar { width: 6px; }
+    .right-panel::-webkit-scrollbar-thumb { background: #d0d4dc; border-radius: 3px; }
+
+    /* Simulated site header */
+    .site-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 1.1rem 2rem;
+      flex-shrink: 0;
+    }
+    .site-header h1 { font-size: 1.1rem; font-weight: 600; }
+    .site-header p  { font-size: 0.78rem; color: #8892b0; margin-top: 0.2rem; }
+
+    /* Article context */
+    .article {
+      background: #fff;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #e8eaed;
+      flex-shrink: 0;
+    }
+    .article h2 { font-size: 1.15rem; color: #1a1a2e; margin-bottom: 0.45rem; }
+    .article p  { font-size: 0.88rem; color: #666; line-height: 1.65; }
+
+    /* Ad area */
+    .ad-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 2rem;
+      gap: 0.6rem;
+    }
+    .ad-label {
+      font-size: 0.62rem;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    .ad-slot {
+      min-width: 300px;
+      min-height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================================
+  EVENT INTERCEPTOR — must run before any ad scripts
+================================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  // main  = macro tracker + click URL  (dummy-tracker.example.com, example.com/click)
+  // bg    = Celtra's own internal pings (track.celtra.com, ads.celtra.com)
+  var MACRO_DOMAINS = ['dummy-tracker.example.com'];
+  var CELTRA_TRACK  = ['track.celtra.com', 'ads.celtra.com'];
+  var CLICK_DOMAIN  = 'example.com';
+  var CLICK_PATH    = '/click';
+
+  function shouldCapture(url) {
+    if (!url || typeof url !== 'string') return false;
+    for (var i = 0; i < MACRO_DOMAINS.length; i++)  { if (url.indexOf(MACRO_DOMAINS[i]) !== -1) return true; }
+    for (var j = 0; j < CELTRA_TRACK.length; j++)   { if (url.indexOf(CELTRA_TRACK[j])  !== -1) return true; }
+    return url.indexOf(CLICK_DOMAIN) !== -1 && url.indexOf(CLICK_PATH) !== -1;
+  }
+
+  function channel(url) {
+    if (!url) return 'bg';
+    for (var i = 0; i < MACRO_DOMAINS.length; i++) { if (url.indexOf(MACRO_DOMAINS[i]) !== -1) return 'main'; }
+    if (url.indexOf(CLICK_DOMAIN) !== -1 && url.indexOf(CLICK_PATH) !== -1) return 'main';
+    return 'bg';
+  }
+
+  function classify(url) {
+    if (!url) return { type: 'other', label: 'EVENT' };
+    var u = url.toLowerCase();
+
+    if (u.indexOf(CLICK_DOMAIN) !== -1 && u.indexOf(CLICK_PATH) !== -1)
+      return { type: 'click', label: 'CLICK_URL' };
+
+    var m = url.match(/[?&](?:name|event|stream)=([^&#]+)/i);
+    if (m) {
+      var ev  = decodeURIComponent(m[1]);
+      var evL = ev.toLowerCase();
+      if (/render|view|impression/.test(evL)) return { type: 'impression', label: 'IMPRESSION' };
+      if (/click/.test(evL))                  return { type: 'click',      label: 'CLICK: ' + ev };
+      if (/custom|q[1-3]/.test(evL)) {
+        var act = (url.match(/[?&]action=([^&#]+)/i) || [])[1];
+        return { type: 'custom', label: act ? 'CUSTOM: ' + decodeURIComponent(act) : 'CUSTOM: ' + ev.toUpperCase() };
+      }
+      return { type: 'other', label: ev.toUpperCase().slice(0, 28) };
+    }
+
+    if (/render|view/.test(u)) return { type: 'impression', label: 'IMPRESSION' };
+    if (/click/.test(u))       return { type: 'click',      label: 'CLICK' };
+    if (/custom/.test(u))      return { type: 'custom',     label: 'CUSTOM EVENT' };
+    return { type: 'other', label: 'TRACKING' };
+  }
+
+  window._celtraLog = { main: [], bg: [] };
+
+  function shortUrl(url) {
+    try {
+      var p = new URL(url);
+      return '<span class="url-host">' + p.hostname + p.pathname + '</span>' + (p.search || '');
+    } catch (e) { return url; }
+  }
+
+  function renderMain(entry) {
+    if (entry._rendered) return;
+    var container = document.getElementById('log-body');
+    if (!container) return;
+    entry._rendered = true;
+
+    var empty = document.getElementById('log-empty');
+    if (empty) empty.style.display = 'none';
+
+    var row = document.createElement('div');
+    row.className = 'log-entry type-' + entry.type;
+    row.innerHTML =
+      '<span class="log-time">'  + entry.time  + '</span>' +
+      '<span class="log-badge">' + entry.label + '</span>' +
+      '<span class="log-url">'   + shortUrl(entry.url) + '</span>';
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+
+    var badge = document.getElementById('log-count');
+    if (badge) badge.textContent = window._celtraLog.main.length;
+  }
+
+  function renderBg(entry) {
+    if (entry._rendered) return;
+    var container = document.getElementById('bg-log-body');
+    if (!container) return;
+    entry._rendered = true;
+
+    var row = document.createElement('div');
+    row.className = 'bg-entry';
+    row.innerHTML =
+      '<span class="bg-time">'  + entry.time  + '</span>' +
+      '<span class="bg-badge">' + entry.label + '</span>' +
+      '<span class="bg-url">'   + shortUrl(entry.url) + '</span>';
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+
+    var badge = document.getElementById('bg-count');
+    if (badge) badge.textContent = window._celtraLog.bg.length;
+  }
+
+  window._celtraRenderEntry = function (entry) {
+    entry.channel === 'main' ? renderMain(entry) : renderBg(entry);
+  };
+
+  window._celtraCapture = function (source, url) {
+    if (!shouldCapture(url)) return;
+    var now  = new Date();
+    var time = ('0' + now.getHours()).slice(-2)   + ':' +
+               ('0' + now.getMinutes()).slice(-2) + ':' +
+               ('0' + now.getSeconds()).slice(-2) + '.' +
+               ('00' + now.getMilliseconds()).slice(-3);
+    var ch    = channel(url);
+    var info  = classify(url);
+    var entry = { time: time, source: source, url: url, type: info.type, label: info.label, channel: ch };
+    window._celtraLog[ch].push(entry);
+    window._celtraRenderEntry(entry);
+    console.info('[CeltraTest][' + ch + ']', info.label, url);
+  };
+
+  /* --- Image.prototype.src --- */
+  var imgDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if (imgDesc && imgDesc.set) {
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+      get: imgDesc.get,
+      set: function (val) {
+        if (shouldCapture(val)) window._celtraCapture('pixel', val);
+        imgDesc.set.call(this, val);
+      },
+      configurable: true
+    });
+  }
+
+  /* --- XMLHttpRequest --- */
+  var origXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    if (shouldCapture(url)) window._celtraCapture('xhr', url);
+    return origXHROpen.apply(this, arguments);
+  };
+
+  /* --- fetch --- */
+  if (window.fetch) {
+    var origFetch = window.fetch;
+    window.fetch = function (resource, init) {
+      var url = typeof resource === 'string' ? resource : (resource && resource.url) || '';
+      if (shouldCapture(url)) window._celtraCapture('fetch', url);
+      return origFetch.apply(this, arguments);
+    };
+  }
+
+  /* --- sendBeacon --- */
+  if (navigator.sendBeacon) {
+    var origBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = function (url, data) {
+      if (shouldCapture(url)) window._celtraCapture('beacon', url);
+      return origBeacon(url, data);
+    };
+  }
+
+  /* --- window.open (click-through) --- */
+  var origOpen = window.open;
+  window.open = function (url, target, features) {
+    if (url && shouldCapture(url)) {
+      window._celtraCapture('click', url);
+      return null;
+    }
+    return origOpen ? origOpen.apply(window, arguments) : null;
+  };
+
+  /* --- Inject into same-origin iframes created by the ad (e.g. Celtra creative frame) --- */
+  function injectIntoFrame(iframe) {
+    function doInject() {
+      try {
+        var w = iframe.contentWindow;
+        if (!w || !w.HTMLImageElement || w._celtraMonitored) return;
+        w._celtraMonitored = true;
+
+        var d = Object.getOwnPropertyDescriptor(w.HTMLImageElement.prototype, 'src');
+        if (d && d.set) {
+          Object.defineProperty(w.HTMLImageElement.prototype, 'src', {
+            get: d.get,
+            set: function (val) {
+              if (shouldCapture(val)) window._celtraCapture('pixel', val);
+              d.set.call(this, val);
+            },
+            configurable: true
+          });
+        }
+
+        var origXHR = w.XMLHttpRequest.prototype.open;
+        w.XMLHttpRequest.prototype.open = function (method, url) {
+          if (shouldCapture(url)) window._celtraCapture('xhr', url);
+          return origXHR.apply(this, arguments);
+        };
+
+        if (w.fetch) {
+          var origFetch = w.fetch;
+          w.fetch = function (resource, init) {
+            var url = typeof resource === 'string' ? resource : (resource && resource.url) || '';
+            if (shouldCapture(url)) window._celtraCapture('fetch', url);
+            return origFetch.apply(w, arguments);
+          };
+        }
+
+        if (w.navigator && w.navigator.sendBeacon) {
+          var origBeacon = w.navigator.sendBeacon.bind(w.navigator);
+          w.navigator.sendBeacon = function (url, data) {
+            if (shouldCapture(url)) window._celtraCapture('beacon', url);
+            return origBeacon(url, data);
+          };
+        }
+
+        var origWinOpen = w.open;
+        w.open = function (url, target, features) {
+          if (url && shouldCapture(url)) {
+            window._celtraCapture('click', url);
+            return null;
+          }
+          return origWinOpen ? origWinOpen.apply(w, arguments) : null;
+        };
+      } catch (ex) { /* cross-origin — cannot inject */ }
+    }
+    // Inject on load; also try immediately in case the frame is already navigated
+    iframe.addEventListener('load', doInject);
+    setTimeout(doInject, 0);
+  }
+
+  // Watch for iframes added anywhere in the DOM after page load
+  var frameObserver = new MutationObserver(function (mutations) {
+    for (var mi = 0; mi < mutations.length; mi++) {
+      var nodes = mutations[mi].addedNodes;
+      for (var ni = 0; ni < nodes.length; ni++) {
+        var node = nodes[ni];
+        if (node.nodeName === 'IFRAME') { injectIntoFrame(node); }
+        if (node.querySelectorAll) {
+          var nested = node.querySelectorAll('iframe');
+          for (var ki = 0; ki < nested.length; ki++) { injectIntoFrame(nested[ki]); }
+        }
+      }
+    }
+  });
+  function startFrameObserver() {
+    if (document.body) frameObserver.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startFrameObserver);
+  } else {
+    startFrameObserver();
+  }
+
+}());
+</script>
+
+<!-- ================================================================
+  PAGE LAYOUT
+================================================================ -->
+<div class="layout">
+
+  <!-- ============================================================
+    LEFT PANEL
+  ============================================================ -->
+  <div class="left-panel">
+
+    <!-- Sidebar brand -->
+    <div class="left-brand">
+      <div>
+        <h1>Celtra Ad Test</h1>
+        <p>Event monitor &amp; tag tester</p>
+      </div>
+      <div class="status-pill">ACTIVE</div>
+    </div>
+
+    <!-- Scrollable top section: tag input + macros -->
+    <div class="left-top">
+
+      <!-- 1. Paste New Tag & Restart -->
+      <details class="lcard" id="tag-panel" open>
+        <summary>Paste New Tag &amp; Restart</summary>
+        <div class="lcard-body">
+          <textarea id="tag-input" class="tag-textarea"
+            placeholder="Paste your Celtra tag here&#10;(<div class=&quot;celtra-ad-v4&quot;>…</div>)"></textarea>
+          <div class="tag-row">
+            <button class="btn-load" onclick="loadTag()">Load Tag &amp; Restart</button>
+            <span id="tag-status"></span>
+          </div>
+        </div>
+      </details>
+
+      <!-- 2. Macro Substitutions -->
+      <details class="lcard">
+        <summary>Macro Substitutions</summary>
+        <div class="lcard-body">
+          <div class="macro-grid">
+            <div class="macro-row"><span class="k">[CLICK_URL]</span><span class="v">https://example.com/click?advertiser=celtra-test&amp;campaign=demo</span></div>
+            <div class="macro-row"><span class="k">[IFA]</span><span class="v">TESTIFA0-0000-0000-0000-000000000001</span></div>
+            <div class="macro-row"><span class="k">[PIXEL_EVENT_VIEW]</span><span class="v">dummy-tracker.example.com/pixel.gif?event=VIEW</span></div>
+            <div class="macro-row"><span class="k">[CUSTOM_EVENT_1]</span><span class="v">dummy-tracker.example.com/pixel.gif?event=CUSTOM_1&amp;action=Q1-{X}</span></div>
+            <div class="macro-row"><span class="k">[CUSTOM_EVENT_2]</span><span class="v">dummy-tracker.example.com/pixel.gif?event=CUSTOM_2&amp;action=Q2-{X}</span></div>
+            <div class="macro-row"><span class="k">[CUSTOM_EVENT_3]</span><span class="v">dummy-tracker.example.com/pixel.gif?event=CUSTOM_3&amp;action=Q3-{X}</span></div>
+            <div class="macro-row"><span class="k">[LAT] / [LON]</span><span class="v">37.7749 / -122.4194</span></div>
+            <div class="macro-row"><span class="k">[PLACEMENT]</span><span class="v">test-placement-001</span></div>
+            <div class="macro-row"><span class="k">[SITEID]</span><span class="v">test-site-001</span></div>
+            <div class="macro-row"><span class="k">[BID_ID]</span><span class="v">bid-id-celtra-test-00001</span></div>
+            <div class="macro-row"><span class="k">[APP_BUNDLE_ID]</span><span class="v">com.gamoshi.testapp</span></div>
+          </div>
+        </div>
+      </details>
+
+    </div><!-- /left-top -->
+
+    <!-- 3. Ad Events (main log — fills remaining space) -->
+    <div class="event-log">
+      <div class="log-head">
+        <div class="log-title">
+          Ad Events
+          <span class="log-count" id="log-count">0</span>
+        </div>
+        <div class="log-legend">
+          <span class="legend-item"><span class="legend-dot dot-impression"></span>Impression</span>
+          <span class="legend-item"><span class="legend-dot dot-click"></span>Click</span>
+          <span class="legend-item"><span class="legend-dot dot-custom"></span>Custom</span>
+        </div>
+        <div class="log-actions">
+          <button class="btn-clear" onclick="clearMainLog()">Clear</button>
+        </div>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-empty" id="log-empty">
+          <span class="icon">⏱</span>
+          Waiting for ad events…
+          <span class="sub">Macro pixels &amp; click URL appear here</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Celtra Internal Tracking (fixed at bottom) -->
+    <div class="bg-log-section">
+      <div class="bg-log-head">
+        <span class="bg-log-title">Celtra Internal</span>
+        <span class="bg-count" id="bg-count">0</span>
+        <button class="bg-clear" onclick="clearBgLog()">Clear</button>
+      </div>
+      <div class="bg-log-body" id="bg-log-body"></div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- ============================================================
+    RIGHT PANEL — ad preview
+  ============================================================ -->
+  <div class="right-panel">
+
+    <!-- Simulated site header -->
+    <div class="site-header">
+      <h1>Celtra Ad Test Page</h1>
+      <p>Live event monitoring — interact with the ad to see fired trackers</p>
+    </div>
+
+    <!-- Article context -->
+    <div class="article">
+      <h2>The Future of Interactive Advertising</h2>
+      <p>Rich-media formats transform how brands engage with audiences. Unlike static banners,
+         interactive units respond to user input — surveys, quizzes, product selectors — delivering
+         higher engagement while capturing first-party signals. Interact with the ad below.</p>
+    </div>
+
+    <!-- Ad slot -->
+    <div class="ad-area">
+      <div class="ad-label">Advertisement</div>
+      <div class="ad-slot" id="ad-slot-inner"></div>
+    </div>
+
+  </div><!-- /right-panel -->
+
+</div><!-- /layout -->
+
+<script>
+  function clearMainLog() {
+    window._celtraLog.main = [];
+    document.getElementById('log-body').innerHTML =
+      '<div class="log-empty" id="log-empty">' +
+        '<span class="icon">⏱</span>Log cleared.' +
+        '<span class="sub">Interact with the ad to see new events</span>' +
+      '</div>';
+    document.getElementById('log-count').textContent = '0';
+  }
+
+  function clearBgLog(e) {
+    if (e) e.stopPropagation();
+    window._celtraLog.bg = [];
+    document.getElementById('bg-log-body').innerHTML = '';
+    document.getElementById('bg-count').textContent = '0';
+  }
+
+  function loadTag() {
+    var raw    = document.getElementById('tag-input').value.trim();
+    var status = document.getElementById('tag-status');
+    if (!raw) { status.textContent = 'Paste a tag first.'; return; }
+    if (raw.indexOf('celtra-ad-v4') === -1 && raw.indexOf('celtra-tag-payload') === -1) {
+      status.textContent = 'Does not look like a Celtra tag.';
+      return;
+    }
+
+    clearMainLog();
+    clearBgLog();
+
+    // Replace all macros with our dummy tracker values before loading
+    var macros = {
+      '\\[CLICK_URL\\]':         'https://example.com/click?advertiser=celtra-test&campaign=demo-rich-media',
+      '\\[IFA\\]':               'TESTIFA0-0000-0000-0000-000000000001',
+      '\\[PIXEL_EVENT_VIEW\\]':  'https://dummy-tracker.example.com/pixel.gif?event=VIEW&placement=test-placement-001',
+      '\\[CUSTOM_EVENT_1\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_1',
+      '\\[CUSTOM_EVENT_2\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_2',
+      '\\[CUSTOM_EVENT_3\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_3',
+      '\\[LAT\\]':               '37.7749',
+      '\\[LON\\]':               '-122.4194',
+      '\\[PLACEMENT\\]':         'test-placement-001',
+      '\\[SITEID\\]':            'test-site-001',
+      '\\[BID_ID\\]':            'bid-id-celtra-test-00001',
+      '\\[APP_BUNDLE_ID\\]':     'com.gamoshi.testapp'
+    };
+    Object.keys(macros).forEach(function (pattern) {
+      raw = raw.replace(new RegExp(pattern, 'g'), macros[pattern]);
+    });
+
+    window.celtraHostPageLoadId = null;
+    window.celtraScriptIndex    = 0;
+
+    var slot = document.getElementById('ad-slot-inner');
+    slot.innerHTML = raw;
+
+    slot.querySelectorAll('script').forEach(function (old) {
+      var s = document.createElement('script');
+      if (old.src) { s.src = old.src; } else { s.textContent = old.textContent; }
+      old.parentNode.replaceChild(s, old);
+    });
+
+    status.textContent = 'Loaded at ' + new Date().toTimeString().slice(0, 8);
+    document.getElementById('tag-panel').removeAttribute('open');
+  }
+
+  // Replay entries that fired before the log DOM was ready
+  (function () {
+    if (!window._celtraLog) return;
+    window._celtraLog.main.forEach(window._celtraRenderEntry);
+    window._celtraLog.bg.forEach(window._celtraRenderEntry);
+  }());
+</script>
+
+</body>
+</html>
