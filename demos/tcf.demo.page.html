@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gamoshi – TCF Demo with Prebid (Quantcast CMP)</title>
+    <style>
+        :root { --bg:#0b1020; --fg:#e7e9ee; --muted:#aab3c5; --card:#121935; --accent:#7dd3fc; }
+        html,body{margin:0; padding:0; background:#0b1020; color:var(--fg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+        .wrap{max-width:1100px; margin:40px auto; padding:24px}
+        .card{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+        h1,h2{margin:0 0 10px}
+        h1{font-size:28px}
+        h2{font-size:20px;color:var(--accent)}
+        code,pre{background:rgba(255,255,255,.06); padding:2px 6px; border-radius:6px}
+        .row{display:grid; gap:16px; grid-template-columns: 1.2fr .8fr}
+        .btn{background:var(--accent); color:#001018; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer}
+        .muted{color:var(--muted)}
+        #consentBox{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+        .kv{display:grid; grid-template-columns: 180px 1fr; gap:8px; align-items:start}
+        .slot{min-height:250px; display:grid; place-items:center; border:1px dashed rgba(255,255,255,.18); border-radius:12px}
+        a{color:#9ae6b4}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card" style="margin-bottom:16px">
+        <h1>Gamoshi – IAB TCF Demo Page (Prebid.js + Quantcast CMP)</h1>
+        <p class="muted">This page demonstrates GDPR/TCF consent flow with a free CMP (Quantcast Choice) and Prebid.js. Auditors can inspect the CMP (<code>__tcfapi</code>), the Prebid consent module, and outgoing bid requests that include <code>gdpr</code> and the TCF <code>tcString</code>.</p>
+    </div>
+
+    <div class="row">
+        <div class="card">
+            <h2>Consent Status (live)</h2>
+            <div id="consentBox">
+                <div class="kv"><div>GDPR Applies:</div><div id="gdprApplies">—</div></div>
+                <div class="kv"><div>TCF Version:</div><div id="tcfVersion">—</div></div>
+                <div class="kv"><div>TC String:</div><div id="tcString" style="word-break:break-all">—</div></div>
+                <div class="kv"><div>Purpose Consents (1–10):</div><div id="purposes">—</div></div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:10px">
+                <button class="btn" onclick="readTCData()">Read TC Data</button>
+                <button class="btn" onclick="openCmp()">Open CMP</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Instructions</h2>
+            <ol class="muted">
+                <li>The page loads the <b>Quantcast Choice CMP</b> automatically (free IAB TCF-compliant CMP).</li>
+                <li>Click <b>Open CMP</b> to show the consent dialog, choose your preferences, then click <b>Read TC Data</b>.</li>
+                <li>Open DevTools → <b>Network</b> and verify that bidder requests contain <code>gdpr=1</code> and <code>tcString</code>.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+        <h2>Ad Slot</h2>
+        <div id="ad-slot-1" class="slot">Ad will render here if a bidder returns a creative</div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+        <h2>Tech Notes</h2>
+        <ul class="muted">
+            <li>Prebid consent module uses <code>cmpApi: 'iab'</code> to read data from the CMP.</li>
+            <li>Quantcast CMP provides the <code>__tcfapi</code> interface for IAB TCF v2.2 compliance.</li>
+            <li>Auditors can confirm that Prebid bidder calls include the same consent string and GDPR flags.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============================ -->
+<!-- Quantcast Choice CMP (Free)  -->
+<!-- ============================ -->
+<script async type="text/javascript" src="https://quantcast.mgr.consensu.org/cmp.js" data-cmp-id="3F3AF7E7-44C3-4093-B09B-64BC46C80C75" data-cmp-style="banner" data-cmp-domain="choice.quantcast.com" data-cmp-language="en"></script>
+
+<script>
+  function openCmp(){
+    if (typeof window.__tcfapi === 'function') {
+      window.__tcfapi('displayConsentUi', 2, function(){});
+    } else {
+      alert('CMP not detected.');
+    }
+  }
+
+  function readTCData(){
+    const out = (id, val) => document.getElementById(id).textContent = val;
+    if (typeof window.__tcfapi !== 'function') {
+      out('gdprApplies','(no CMP detected)');
+      out('tcString','—'); out('purposes','—'); out('tcfVersion','—');
+      return;
+    }
+    window.__tcfapi('getTCData', 2, function(tcData, success){
+      if (!success || !tcData){ alert('Failed to read TC data'); return; }
+      out('gdprApplies', String(tcData.gdprApplies));
+      out('tcfVersion', String(tcData.tcfPolicyVersion||'2.x'));
+      out('tcString', tcData.tcString || '(empty)');
+      const pc = tcData.purpose && tcData.purpose.consents ? tcData.purpose.consents : {};
+      const keys = Object.keys(pc).sort((a,b)=>Number(a)-Number(b));
+      out('purposes', keys.length ? keys.map(k=>`${k}:${pc[k]?'Y':'N'}`).join('  ') : '(none)');
+    });
+  }
+</script>
+
+<script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
+<script>
+  window.pbjs = window.pbjs || {que: []};
+  pbjs.que.push(function(){
+    pbjs.setConfig({
+      consentManagement: {
+        gdpr: {
+          cmpApi: 'iab',
+          timeout: 8000,
+          defaultGdprScope: true
+        }
+      }
+    });
+
+    const adUnits = [{
+      code: 'ad-slot-1',
+      mediaTypes: { banner: { sizes: [[300,250],[320,50]] } },
+      bids: [ { bidder: 'gamoshi', params: { supplyPartnerId: 13144370 } } ]
+    }];
+
+    pbjs.addAdUnits(adUnits);
+    pbjs.requestBids({
+      bidsBackHandler: function(){
+        const adUnit = pbjs.getAdserverTargetingForAdUnitCode('ad-slot-1');
+        if (adUnit && Object.keys(adUnit).length){
+          document.getElementById('ad-slot-1').textContent = 'Bid received. Inspect Network tab for consent params.';
+        } else {
+          document.getElementById('ad-slot-1').textContent = 'No bid. Network still shows consent in bidder requests.';
+        }
+      },
+      timeout: 1500
+    });
+  });
+  window.addEventListener('load', ()=> setTimeout(readTCData, 800));
+</script>
+</body>
+</html>

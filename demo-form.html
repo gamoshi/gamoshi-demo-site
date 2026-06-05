@@ -1,10 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
-$END$
+
+<div class="celtra-ad-v3">
+    <!-- gpsLat              = raw [LAT] -->
+    <!-- gpsLng              = raw [LON] -->
+    <!-- eas.W0JJRF9JRF0%3D  = raw [BID_ID] -->
+    <!-- externalCreativeId  = raw [IFA] -->
+    <!-- externalPlacementId = raw [PLACEMENT] -->
+    <!-- externalSiteId      = raw [SITEID] -->
+    <!-- externalBundleId    = raw [APP_BUNDLE_ID] -->
+    <img src="data:image/png,celtra" style="display: none" onerror="
+        (function(img) {
+            var params = {'accountId':'bb070bb2','clickUrl':'[CLICK_URL]','expandDirection':'undefined','preferredClickThroughWindow':'new','clickEvent':'advertiser','iosAdvId':'[IFA]','androidAdvId':'[IFA]','externalAdServer':'Custom','tagVersion':'html-standard-10'};
+            [].slice.apply(img.parentNode.childNodes).forEach(function(n) { var decfs = { urldecode: decodeURIComponent, htmldecode: function(v) { var d = document.createElement('div'); d.innerHTML = v; return d.textContent; }, eval: function(v) { return eval(v); }, raw: function(v) { return v; } }; var m; if (n.nodeType == 8 &amp;&amp; (m = n.textContent.match(/^&#92;s+([&#92;w%.]+)(&#92;[.+&#92;])?&#92;s+=&#92;s+(&#92;w+)&#92;s+(.*)$/i))) { try { params[m[1]+(m[2] || '')] = decfs[m[3]](m[4].replace(/^&#92;s+|&#92;s+$/g, '')); } catch (e) {} } });
+            var req = document.createElement('script');
+            req.id = params.scriptId = 'celtra-script-' + (window.celtraScriptIndex = (window.celtraScriptIndex||0)+1);
+            params.clientTimestamp = new Date/1000;
+            params.clientTimeZoneOffsetInMinutes = new Date().getTimezoneOffset();
+            params.hostPageLoadId=window.celtraHostPageLoadId=window.celtraHostPageLoadId||(Math.random()+'').slice(2);
+            var qs = '';
+            for (var k in params) {
+                qs += '&amp;' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+            }
+            var src = 'https://cdn.celtra.com/ads/c4077d35/web.js?' + qs;
+            if (src.length >= 8192) {
+                src = 'https://ads.celtra.com/c4077d35/web.js?' + qs;
+            }
+            req.src = src;
+            img.parentNode.insertBefore(req, img.nextSibling);
+        })(this);
+    "/>
+</div>
+
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eMarketMed Demo Page</title>
+  <title>StarTech Demo Page</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
     header { background: #222; color: #fff; padding: 1rem; text-align: center; }
@@ -16,15 +16,15 @@
 </head>
 <body>
   <header>
-    <h1>eMarketMed Demo Page</h1>
+    <h1>StarTech Demo Page</h1>
     <p>Demonstrates Prebid.js with Gamoshi RTB endpoint.</p>
   </header>
   <main>
     <section class="content">
       <h2>Sample Ad Placement</h2>
-      <p>This is a demonstration of a 300x250 ad slot using Prebid.js with the eMarketMed configuration.</p>
+      <p>This is a demonstration of a 300x250 ad slot using Prebid.js with the StarTech configuration.</p>
       <div class="info">
-        <strong>Endpoint:</strong> https://377.bidder.gamx.io/r/28023/bidr<br>
+        <strong>Endpoint:</strong> https://372.bidder.gamx.io/r/27879/bidr<br>
         <strong>Banner Size:</strong> 300x250
       </div>
     </section>
@@ -57,7 +57,7 @@
       };
 
       // Get parameters from URL or use defaults
-      var supplyPartnerId = getUrlParameter('supply_partner_id') || '28023';
+      var supplyPartnerId = getUrlParameter('supply_partner_id') || '27879';
       var adWidth = parseInt(getUrlParameter('adw')) || 300;
       var adHeight = parseInt(getUrlParameter('adh')) || 250;
 
@@ -80,7 +80,7 @@
           bidder: 'gamoshi',
           params: {
             supplyPartnerId: supplyPartnerId,
-            rtbEndpoint: 'https://377.bidder.gamx.io',
+            rtbEndpoint: 'https://372.bidder.gamx.io',
             placementId: 'sgamoshi-ad-slot'
           }
         }]

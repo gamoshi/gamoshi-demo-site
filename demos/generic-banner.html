@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generic Banner Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    header { background: #222; color: #fff; padding: 1rem; text-align: center; }
+    main { max-width: 900px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    .ip-display { text-align: center; font-size: 20px; font-weight: bold; margin: 1rem 0; }
+    .ad-container { display: flex; flex-direction: column; align-items: center; margin: 2rem 0; }
+    .ad-slot { width: 300px; height: 250px; background: #eee; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #888; }
+    .no-ad { background: #f5f5f5; color: #999; border-style: solid; }
+    .debug-section { margin: 2rem 0; padding: 1rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
+    .debug-title { font-weight: bold; margin-bottom: 0.5rem; }
+    .debug-content { background: #fff; padding: 0.5rem; border: 1px solid #ccc; border-radius: 3px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Generic Banner Demo</h1>
+    <p>Generic banner ad demonstration</p>
+  </header>
+  <main>
+    <div id="ip-display" class="ip-display">Loading IP...</div>
+    
+    <div class="ad-container">
+      <div class="ad-slot" id="banner-ad-slot">
+        Banner Ad 300x250
+      </div>
+    </div>
+
+    <!-- Prebid.js and Gamoshi Adapter integration scripts -->
+      <script src="https://cdn.jsdelivr.net/npm/prebid.js@10.8.0/dist/not-for-prod/prebid.min.js"></script>
+    <script type="application/javascript">
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      }
+
+      // Get parameters from URL or use defaults
+      var supplyPartnerId = getUrlParameter('supply_partner_id') ||  '26787';
+      var adWidth = parseInt(getUrlParameter('width')) || 300;
+      var adHeight = parseInt(getUrlParameter('height')) || 250;
+      var mediaType = getUrlParameter('media_type') || 'banner';
+      var bidderEndpoint = getUrlParameter('bidder_endpoint') || 'https://369.bidder.gamx.io';
+
+      // Update ad slot dimensions
+      const adSlotDiv = document.getElementById('banner-ad-slot');
+      if (adSlotDiv) {
+        adSlotDiv.style.width = `${adWidth}px`;
+        adSlotDiv.style.height = `${adHeight}px`;
+      }
+
+      // Fetch IP address
+      fetch('https://369.bidder.gamx.io/echo-server')
+        .then(response => response.json())
+        .then(data => {
+          let ip = 'Unknown';
+          if (Array.isArray(data)) {
+            const forwardedForEntry = data.find(entry => entry['X-Forwarded-For']);
+            if (forwardedForEntry) {
+              ip = forwardedForEntry['X-Forwarded-For'];
+            }
+          }
+          document.getElementById('ip-display').textContent = `Your IP is ${ip}`;
+        })
+        .catch(error => {
+          document.getElementById('ip-display').textContent = 'Your IP is Unknown';
+        });
+
+      // Prebid configuration
+      var adUnits = [{
+        code: 'banner-ad-slot',
+        mediaTypes: {
+          banner: {
+            sizes: [[adWidth, adHeight]]
+          }
+        },
+        bids: [{
+          bidder: 'gamoshi',
+          params: {
+            supplyPartnerId: supplyPartnerId,
+            placementId: 'banner-ad-slot'
+          }
+        }]
+      }];
+
+      function showNoAd() {
+        adSlotDiv.textContent = 'No Ad Available';
+        adSlotDiv.classList.add('no-ad');
+      }
+
+      // Initialize Prebid
+      pbjs.que = pbjs.que || [];
+      pbjs.que.push(function() {
+        pbjs.addAdUnits(adUnits);
+        pbjs.requestBids({
+          bidsBackHandler: function() {
+            const bids = pbjs.getHighestCpmBids('banner-ad-slot');
+            if (bids && bids.length > 0) {
+              // Test content from response.html file
+
+              const adContainer = document.getElementById('banner-ad-slot');
+              adContainer.innerHTML = '';
+              
+              // Create iframe to safely render the ad
+              const iframe = document.createElement('iframe');
+              iframe.width = adWidth;
+              iframe.height = adHeight;
+              iframe.frameBorder = '0';
+              iframe.scrolling = 'no';
+              iframe.marginHeight = '0';
+              iframe.marginWidth = '0';
+              iframe.style.border = 'none';
+              adContainer.appendChild(iframe);
+              const iframeDoc = iframe.contentWindow.document;
+              iframeDoc.open();
+              iframeDoc.write('<html><head><style>body{margin:0;padding:0;}</style></head><body>' + bids[0].ad + '</body></html>');
+              iframeDoc.close();
+            } else {
+              showNoAd();
+            }
+          }
+        });
+      });
+    </script>
+  </main>
+</body>
+</html>

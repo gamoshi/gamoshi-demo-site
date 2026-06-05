@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eMarketMed Demo Page</title>
+  <title>Test Customer Demo Page</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
     header { background: #222; color: #fff; padding: 1rem; text-align: center; }
@@ -16,15 +16,15 @@
 </head>
 <body>
   <header>
-    <h1>eMarketMed Demo Page</h1>
+    <h1>Test Customer Demo Page</h1>
     <p>Demonstrates Prebid.js with Gamoshi RTB endpoint.</p>
   </header>
   <main>
     <section class="content">
       <h2>Sample Ad Placement</h2>
-      <p>This is a demonstration of a 300x250 ad slot using Prebid.js with the eMarketMed configuration.</p>
+      <p>This is a demonstration of a 300x250 ad slot using Prebid.js with the Test Customer configuration.</p>
       <div class="info">
-        <strong>Endpoint:</strong> https://377.bidder.gamx.io/r/28023/bidr<br>
+        <strong>Endpoint:</strong> https://999.bidder.gamx.io<br>
         <strong>Banner Size:</strong> 300x250
       </div>
     </section>
@@ -40,33 +40,28 @@
     <hr>
 
     <!-- Prebid.js integration -->
-    <!-- Load Prebid.js library first -->
     <script src="https://cdn.jsdelivr.net/npm/prebid.js@10.8.0/dist/not-for-prod/prebid.min.js"></script>
 
     <script type="application/javascript">
-      // Initialize Prebid queue
       var pbjs = pbjs || {};
       pbjs.que = pbjs.que || [];
 
-      // Function to get URL parameters
       function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        name = name.replace(/[\[\]]/, function(c) { return '\\' + c; });
         var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
         var results = regex.exec(location.search);
         return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-      };
+      }
 
-      // Get parameters from URL or use defaults
-      var supplyPartnerId = getUrlParameter('supply_partner_id') || '28023';
-      var adWidth = parseInt(getUrlParameter('adw')) || 300;
-      var adHeight = parseInt(getUrlParameter('adh')) || 250;
+      var supplyPartnerId = getUrlParameter('supply_partner_id') || '55555';
+      var adWidth  = parseInt(getUrlParameter('adw'))  || 300;
+      var adHeight = parseInt(getUrlParameter('adh'))  || 250;
 
-      // Update ad slot placeholder text and style
-      const adSlotDiv = document.getElementById('sgamoshi-ad-slot');
+      var adSlotDiv = document.getElementById('sgamoshi-ad-slot');
       if (adSlotDiv) {
-        adSlotDiv.textContent = `Ad Slot ${adWidth}x${adHeight}`;
-        adSlotDiv.style.width = `${adWidth}px`;
-        adSlotDiv.style.height = `${adHeight}px`;
+        adSlotDiv.textContent = 'Ad Slot ' + adWidth + 'x' + adHeight;
+        adSlotDiv.style.width  = adWidth  + 'px';
+        adSlotDiv.style.height = adHeight + 'px';
       }
 
       var adUnits = [{
@@ -80,13 +75,12 @@
           bidder: 'gamoshi',
           params: {
             supplyPartnerId: supplyPartnerId,
-            rtbEndpoint: 'https://377.bidder.gamx.io',
+            rtbEndpoint: 'https://999.bidder.gamx.io',
             placementId: 'sgamoshi-ad-slot'
           }
         }]
       }];
 
-      // Add to Prebid queue
       pbjs.que.push(function() {
         pbjs.addAdUnits(adUnits);
         pbjs.requestBids({
@@ -94,7 +88,6 @@
             var bids = pbjs.getHighestCpmBids('sgamoshi-ad-slot');
             if (bids && bids.length > 0) {
               console.log('Bid received:', bids[0]);
-              // Create an iframe for the ad
               var adSlot = document.getElementById('sgamoshi-ad-slot');
               var iframe = document.createElement('iframe');
               iframe.width = adWidth;
@@ -103,19 +96,18 @@
               iframe.scrolling = 'no';
               adSlot.innerHTML = '';
               adSlot.appendChild(iframe);
-
-              // Render ad into iframe
               var iframeDoc = iframe.contentWindow.document;
               pbjs.renderAd(iframeDoc, bids[0].adId);
             } else {
               console.log('No bids returned');
-              document.getElementById('sgamoshi-ad-slot').innerHTML = '<div style="color: #999; padding: 2rem;">No ad returned</div>';
+              document.getElementById('sgamoshi-ad-slot').innerHTML =
+                '<div style="color: #999; padding: 2rem;">No ad returned</div>';
             }
           }
         });
 
-        // Display Prebid config
-        document.getElementById('prebidConfigOutput').textContent = JSON.stringify(adUnits, null, 2);
+        document.getElementById('prebidConfigOutput').textContent =
+          JSON.stringify(adUnits, null, 2);
       });
     </script>
   </main>
