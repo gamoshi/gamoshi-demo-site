@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixalate Duplicate Impression Test</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+    h2 { color: #aef; }
+    #ad-container { border: 2px dashed #555; padding: 0; width: 320px; min-height: 50px; margin: 20px 0; background: #fff; overflow: visible; position: relative; }
+    #log { background: #000; border: 1px solid #333; padding: 10px; height: 300px; overflow-y: auto; font-size: 12px; }
+    .log-entry { margin: 2px 0; }
+    .log-imp  { color: #f80; }
+    .log-win  { color: #0f8; }
+    .log-bill { color: #08f; }
+    .log-aa   { color: #f0f; }
+    .log-pv   { color: #888; }
+    .log-info { color: #ccc; }
+    button { background: #333; color: #eee; border: 1px solid #555; padding: 6px 14px; cursor: pointer; margin: 4px; }
+    button:hover { background: #444; }
+    .meta { font-size: 11px; color: #777; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Pixalate Duplicate Impression Test</h2>
+<div class="meta">
+  imp: imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6 &nbsp;|&nbsp;
+  price: $0.656355 &nbsp;|&nbsp;
+  size: 320x50 &nbsp;|&nbsp;
+  app: com.brain.logic.joygame
+</div>
+
+<div>
+  <button onclick="renderAd()">Render Ad</button>
+  <button onclick="clearAd()">Clear</button>
+  <button onclick="renderAd()">Re-render (simulate duplicate)</button>
+</div>
+
+<div id="ad-container">
+  <span style="color:#555;font-size:11px">ad not rendered yet</span>
+</div>
+
+<h3 style="margin-top:20px">Network Log (intercepted)</h3>
+<div id="log"></div>
+
+<script>
+// ── MRAID stub (so Celtra/impression trackers don't fall into error paths) ──
+window.mraid = (function() {
+  var _listeners = {};
+  var _viewable = true;
+  var _state = 'default';
+  return {
+    getVersion:        function() { return '2.0'; },
+    getState:          function() { return _state; },
+    isViewable:        function() { return _viewable; },
+    addEventListener:  function(evt, fn) {
+      _listeners[evt] = _listeners[evt] || [];
+      _listeners[evt].push(fn);
+    },
+    removeEventListener: function(evt, fn) {
+      if (_listeners[evt]) _listeners[evt] = _listeners[evt].filter(function(f){ return f !== fn; });
+    },
+    fireEvent: function(evt, val) {
+      (_listeners[evt] || []).forEach(function(fn){ fn(val); });
+    },
+    expand:   function() {},
+    close:    function() {},
+    open:     function(url) { window.open(url, '_blank'); },
+    getPlacementType: function() { return 'inline'; },
+    getScreenSize:    function() { return { width: 320, height: 50 }; },
+    getMaxSize:       function() { return { width: 320, height: 50 }; }
+  };
+})();
+
+// ── intercept image pixels ──────────────────────────────────────────────────
+(function() {
+  var _Image = window.Image;
+  function LoggedImage() {
+    var img = new _Image();
+    var self = this;
+    Object.defineProperty(self, 'src', {
+      set: function(url) {
+        logPixel(url);
+        img.src = url;
+      },
+      get: function() { return img.src; }
+    });
+    self.style = img.style;
+    return self;
+  }
+  LoggedImage.prototype = _Image.prototype;
+  // we only intercept createElement('img') below, not new Image()
+})();
+
+var _createElement = document.createElement.bind(document);
+document.createElement = function(tag) {
+  var el = _createElement(tag);
+  if (tag.toLowerCase() === 'img') {
+    var _setSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    if (_setSrc && _setSrc.set) {
+      Object.defineProperty(el, 'src', {
+        set: function(url) {
+          logPixel(url);
+          _setSrc.set.call(el, url);
+        },
+        get: function() { return _setSrc.get.call(el); },
+        configurable: true
+      });
+    }
+  }
+  if (tag.toLowerCase() === 'script') {
+    var _setSrcS = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+    if (_setSrcS && _setSrcS.set) {
+      Object.defineProperty(el, 'src', {
+        set: function(url) {
+          logScript(url);
+          _setSrcS.set.call(el, url);
+        },
+        get: function() { return _setSrcS.get.call(el); },
+        configurable: true
+      });
+    }
+  }
+  return el;
+};
+
+// ── logging ─────────────────────────────────────────────────────────────────
+var fireCount = {};
+function logPixel(url) {
+  if (!url) return;
+  var cls = 'log-info', type = 'pixel';
+  if (url.includes('/imp/'))       { cls = 'log-imp';  type = 'IMP TRACKER'; }
+  else if (url.includes('/win_'))  { cls = 'log-win';  type = 'WIN NOTICE'; }
+  else if (url.includes('/bill_')) { cls = 'log-bill'; type = 'BILL NOTICE'; }
+  else if (url.includes('/page_v')){ cls = 'log-pv';   type = 'PAGE VIEW'; }
+  // key by type + full URL so different tracker URLs are never conflated
+  var key = type + '|' + url;
+  fireCount[key] = (fireCount[key] || 0) + 1;
+  var count = fireCount[key];
+  var warn = count > 1 ? ' ⚠️ DUPLICATE #' + count : '';
+  addLog('[' + type + warn + '] ' + truncate(url), cls + (count > 1 ? ' log-imp' : ''));
+}
+function logScript(url) {
+  if (!url) return;
+  var cls = 'log-aa', type = 'SCRIPT';
+  if (url.includes('aa.js'))     { type = 'aa.js (Pixalate)'; }
+  else if (url.includes('celtra')){ type = 'Celtra'; }
+  // key by type + url so different scripts tracked separately
+  var key = type + '|' + url;
+  fireCount[key] = (fireCount[key] || 0) + 1;
+  var count = fireCount[key];
+  var warn = count > 1 ? ' ⚠️ DUPLICATE #' + count : '';
+  addLog('[' + type + warn + '] ' + truncate(url), cls + (count > 1 ? ' log-imp' : ''));
+}
+function addLog(msg, cls) {
+  var el = document.createElement('div');
+  el.className = 'log-entry ' + (cls || 'log-info');
+  var ts = new Date().toISOString().substr(11, 12);
+  el.textContent = ts + '  ' + msg;
+  var log = document.getElementById('log');
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+function truncate(s) {
+  return s.length > 120 ? s.substr(0, 120) + '...' : s;
+}
+
+// catch JS errors from ad scripts and show in log
+window.onerror = function(msg, src, line) {
+  addLog('[JS ERROR] ' + msg + (src ? ' @ ' + truncate(src) + ':' + line : ''), 'log-bill');
+  return false;
+};
+
+// ── ad render ────────────────────────────────────────────────────────────────
+var renderCount = 0;
+var _injectedScripts = [];
+
+function renderAd() {
+  renderCount++;
+  addLog('--- render #' + renderCount + ' ---', 'log-info');
+
+  // remove scripts injected by previous renders so they don't pile up
+  _injectedScripts.forEach(function(s) {
+    try { s.parentNode && s.parentNode.removeChild(s); } catch(e) {}
+  });
+  _injectedScripts = [];
+
+  var container = document.getElementById('ad-container');
+  container.innerHTML = getAdm();
+
+  // innerHTML doesn't execute scripts — manually clone and inject each one
+  var scripts = container.querySelectorAll('script');
+  scripts.forEach(function(s) {
+    var ns = _createElement('script'); // bypass our override — src setter applied below
+    if (s.getAttribute('src')) {
+      ns.src = s.getAttribute('src');  // goes through prototype setter for logging
+      logScript(ns.src);
+    } else {
+      ns.textContent = s.textContent;
+    }
+    _injectedScripts.push(ns);
+    document.body.appendChild(ns);
+  });
+}
+
+function clearAd() {
+  _injectedScripts.forEach(function(s) {
+    try { s.parentNode && s.parentNode.removeChild(s); } catch(e) {}
+  });
+  _injectedScripts = [];
+  document.getElementById('ad-container').innerHTML = '<span style="color:#555;font-size:11px">cleared</span>';
+  fireCount = {};
+  addLog('--- cleared ---', 'log-info');
+}
+
+// ── adm from bid response ────────────────────────────────────────────────────
+function getAdm() {
+  return `<script src="mraid.js"><\/script>
+<div class="celtra-ad-v3">
+    <!-- gpsLat                                 = raw 14.634915 -->
+    <!-- gpsLng                                 = raw -90.50688 -->
+    <!-- eas.W1BJWEVMX0VWRU5UX1ZJRVdd           = raw https://370.bidder.gamx.io/pix/26815/view/imp-3d18a9ad-ea96-4794-b17c-a989468d20ee/im.gif?r=imp-3d18a9ad-ea96-4794-b17c-a989468d20ee&i=1&a=12764&b=gb_1201693617_2&t=b&est=1782123708395&impex=3600 -->
+    <!-- eas.W0ZPUk1fU1VCTUlTU0lPTl9FVkVOVF0%3D = raw https://370.bidder.gamx.io/pix/26815/att_form/imp-3d18a9ad-ea96-4794-b17c-a989468d20ee/im.gif?r=imp-3d18a9ad-ea96-4794-b17c-a989468d20ee&i=1&a=12764&b=gb_1201693617_2&t=b&est=1782123708395&impex=3600 -->
+    <!-- externalCreativeId                     = raw 97f2a72f-bb2d-4482-98c3-78d2cc753bc6 -->
+    <!-- externalPlacementId                    = raw e4a82ac5ec0538c2f4bb6d1f02856a6f -->
+    <!-- externalSessionId                      = raw gb_1201693617_2 -->
+    <!-- externalBundleId                       = raw com.brain.logic.joygame -->
+    <img src="data:image/png,celtra" style="display: none" onerror="
+        (function(img) {
+            var params = {'accountId':'bb070bb2','clickUrl':'https://370.bidder.gamx.io/pix/26815/click/imp-3d18a9ad-ea96-4794-b17c-a989468d20ee/im.gif?r=imp-3d18a9ad-ea96-4794-b17c-a989468d20ee&i=1&a=12764&b=gb_1201693617_2&t=b&est=1782123708395&impex=3600&scon=0&du=https%3A%2F%2Flahora.gt%2F','widthBreakpoint':'','clickEvent':'advertiser','iosAdvId':'97f2a72f-bb2d-4482-98c3-78d2cc753bc6','androidAdvId':'97f2a72f-bb2d-4482-98c3-78d2cc753bc6','externalAdServer':'Custom','tagVersion':'html-standard-10'};
+            [].slice.apply(img.parentNode.childNodes).forEach(function(n) { var decfs = { urldecode: decodeURIComponent, htmldecode: function(v) { var d = document.createElement('div'); d.innerHTML = v; return d.textContent; }, eval: function(v) { return eval(v); }, raw: function(v) { return v; } }; var m; if (n.nodeType == 8 && (m = n.textContent.match(/^\s+([\w%.]+)(\[.+\])?\s+=\s+(\w+)\s+(.*)$/i))) { try { params[m[1]+(m[2] || '')] = decfs[m[3]](m[4].replace(/^\s+|\s+$/g, '')); } catch (e) {} } });
+            var req = document.createElement('script');
+            req.id = params.scriptId = 'celtra-script-' + (window.celtraScriptIndex = (window.celtraScriptIndex||0)+1);
+            params.clientTimestamp = new Date/1000;
+            params.clientTimeZoneOffsetInMinutes = new Date().getTimezoneOffset();
+            params.hostPageLoadId=window.celtraHostPageLoadId=window.celtraHostPageLoadId||(Math.random()+'').slice(2);
+            var qs = '';
+            for (var k in params) {
+                qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+            }
+            var src = 'https://cdn.celtra.com/ads/d7ded616/mraid-ad.js?' + qs;
+            if (src.length >= 8192) {
+                src = 'https://ads.celtra.com/d7ded616/mraid-ad.js?' + qs;
+            }
+            req.src = src;
+            img.parentNode.insertBefore(req, img.nextSibling);
+        })(this);
+    "/>
+</div>
+<img src="https://370.bidder.gamx.io/pix/26815/page_v/imp-3d18a9ad-ea96-4794-b17c-a989468d20ee/im.gif?r=imp-3d18a9ad-ea96-4794-b17c-a989468d20ee&i=1&a=12764&b=gb_1201693617_2&t=b&est=1782123708395&impex=3600" alt=" " style="display:none"/>
+<script>gamoshi_370_ImpTracker=['https:\\/\\/370.bidder.gamx.io\\/pix\\/26815\\/imp\\/imp-3d18a9ad-ea96-4794-b17c-a989468d20ee\\/im.gif?r=imp-3d18a9ad-ea96-4794-b17c-a989468d20ee&i=1&a=12764&b=gb_1201693617_2&t=b&est=1782123708396&impex=3600&i_mrd=1'],gamoshi_370_ImpressionTracked=!1,sendGamoshi_370_Impression=function(){var e;if(!e){var a=document.createElement("span");a.style.display="none",gamoshi_370_ImpTracker.forEach(function(e){var i=document.createElement("img");i.style.display="none",e.includes("i_mrd=")?i.src=e+'&mrd='+(exist?1:0):i.src=e,a.appendChild(i)}),document.body.appendChild(a),e=!0}};var gamoshi_370_TrackViewableChange=function(e){e&&sendGamoshi_370_Impression()},gamoshi_370_SubscribeViewableEvent=function(){mraid.isViewable()?sendGamoshi_370_Impression():mraid.addEventListener("viewableChange",gamoshi_370_TrackViewableChange)},exist=!1;try{exist=!!mraid}catch(e){}exist?"loading"===mraid.getState()?mraid.addEventListener("ready",gamoshi_370_SubscribeViewableEvent):gamoshi_370_SubscribeViewableEvent():sendGamoshi_370_Impression();<\/script>
+<img src="https://px.gamoshi.io/pix/27626/page_v/imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6/im.gif?r=imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6&i=1&a=26817-326293363&b=27626_gb_1861991648_2&t=b&est=1782123708397&impex=3540" alt=" " style="display:none"/>
+<script>gamoshi_267_ImpTracker=['https:\\/\\/px.gamoshi.io\\/pix\\/27626\\/imp\\/imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6\\/im.gif?r=imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6&i=1&a=26817-326293363&b=27626_gb_1861991648_2&t=b&est=1782123708397&impex=3540&i_mrd=1'],gamoshi_267_ImpressionTracked=!1,sendGamoshi_267_Impression=function(){var e;if(!e){var a=document.createElement("span");a.style.display="none",gamoshi_267_ImpTracker.forEach(function(e){var i=document.createElement("img");i.style.display="none",e.includes("i_mrd=")?i.src=e+'&mrd='+(exist?1:0):i.src=e,a.appendChild(i)}),document.body.appendChild(a),e=!0}};var gamoshi_267_TrackViewableChange=function(e){e&&sendGamoshi_267_Impression()},gamoshi_267_SubscribeViewableEvent=function(){mraid.isViewable()?sendGamoshi_267_Impression():mraid.addEventListener("viewableChange",gamoshi_267_TrackViewableChange)},exist=!1;try{exist=!!mraid}catch(e){}exist?"loading"===mraid.getState()?mraid.addEventListener("ready",gamoshi_267_SubscribeViewableEvent):gamoshi_267_SubscribeViewableEvent():sendGamoshi_267_Impression();<\/script>
+<script type="text/javascript" src="https://cdn.gms.gamoshi.io/s/gms/aa.js?cb=e31c8929-6410-4845-b208-fe6c6ec21e95#gms;paid=gms;avid=26817-AdNex+370+G-X-M+App;caid=34321;plid=12764;publisherId=37959;kv1=320x50;kv2=-;kv3=97f2a72f-bb2d-4482-98c3-78d2cc753bc6;kv4=181.174.104.147;kv7=27626-Vosaco+US+In-App;kv9=0;kv11=imp-3a70a4e7-fb57-46f6-a73e-e358a8bf8fe6-1;kv13=;kv15=GTM;kv16=14.634915;kv17=-90.50688;kv18=com.brain.logic.joygame;kv19=97f2a72f-bb2d-4482-98c3-78d2cc753bc6;kv20=;kv21=;kv22=;kv23=;kv25=Brain+Puzzle+2%3A+Logic+Twist;kv28=ALT-NX3;kv26=Android;kv27=Mozilla%2F5.0+%28Linux%3B+Android+15%3B+ALT-NX3+Build%2FHONORALT-N03E%3B+wv%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Version%2F4.0+Chrome%2F149.0.7827.91+Mobile+Safari%2F537.36;kv24=Mobile_InApp"><\/script>`;
+}
+</script>
+
+</body>
+</html>
