@@ -44,8 +44,8 @@
       align-items: center;
       justify-content: space-between;
     }
-    .left-brand h1 { font-size: 0.9rem; font-weight: 700; color: #c9d1d9; letter-spacing: 0.2px; }
-    .left-brand p  { font-size: 0.7rem; color: #484f58; margin-top: 0.1rem; }
+    .left-brand h1 { font-size: 0.9rem; font-weight: 700; color: #e6edf3; letter-spacing: 0.2px; }
+    .left-brand p  { font-size: 0.7rem; color: #8b949e; margin-top: 0.1rem; }
 
     .status-pill {
       display: inline-flex;
@@ -86,7 +86,7 @@
       gap: 0.5rem;
       padding: 0.65rem 1.1rem;
       background: #0d1117;
-      color: #6e7681;
+      color: #8b949e;
       font-size: 0.72rem;
       font-weight: 600;
       cursor: pointer;
@@ -128,7 +128,7 @@
       margin-bottom: 0.65rem;
     }
     .tag-textarea:focus { border-color: #58a6ff; color: #c9d1d9; }
-    .tag-textarea::placeholder { color: #30363d; }
+    .tag-textarea::placeholder { color: #6e7681; }
 
     .tag-row { display: flex; align-items: center; gap: 0.65rem; }
     .btn-load {
@@ -145,7 +145,7 @@
       white-space: nowrap;
     }
     .btn-load:hover { background: #2ea043; }
-    #tag-status { font-size: 0.7rem; color: #484f58; }
+    #tag-status { font-size: 0.7rem; color: #8b949e; }
 
     /* Macro grid */
     .macro-grid {
@@ -165,7 +165,7 @@
       border: 1px solid #21262d;
     }
     .macro-row .k { color: #f47067; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-    .macro-row .v { color: #484f58; word-break: break-all; }
+    .macro-row .v { color: #8b949e; word-break: break-all; }
 
     /* ---- Ad Events log (flex-grow) ---- */
     .event-log {
@@ -207,7 +207,7 @@
       gap: 0.75rem;
       font-size: 0.65rem;
     }
-    .legend-item { display: flex; align-items: center; gap: 0.28rem; color: #6e7681; }
+    .legend-item { display: flex; align-items: center; gap: 0.28rem; color: #8b949e; }
     .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .dot-impression { background: #58a6ff; }
     .dot-click      { background: #f78166; }
@@ -216,8 +216,8 @@
     .log-actions { display: flex; gap: 0.4rem; }
     .btn-clear {
       background: transparent;
-      border: 1px solid #21262d;
-      color: #484f58;
+      border: 1px solid #30363d;
+      color: #8b949e;
       padding: 0.25rem 0.65rem;
       border-radius: 5px;
       font-size: 0.65rem;
@@ -243,13 +243,13 @@
       justify-content: center;
       height: 100%;
       min-height: 100px;
-      color: #30363d;
+      color: #8b949e;
       font-size: 0.78rem;
       text-align: center;
       gap: 0.4rem;
     }
-    .log-empty .icon { font-size: 1.6rem; opacity: 0.35; }
-    .log-empty .sub  { font-size: 0.67rem; color: #21262d; }
+    .log-empty .icon { font-size: 1.6rem; opacity: 0.6; }
+    .log-empty .sub  { font-size: 0.67rem; color: #6e7681; }
 
     .log-entry {
       display: grid;
@@ -271,7 +271,7 @@
     .log-entry.type-custom     { border-color: #2ea043; }
     .log-entry.type-other      { border-color: #21262d; }
 
-    .log-time  { color: #30363d; }
+    .log-time  { color: #8b949e; }
     .log-badge {
       font-size: 0.6rem; font-weight: 700;
       padding: 0.1rem 0.35rem; border-radius: 3px;
@@ -281,9 +281,9 @@
     .type-impression .log-badge { background: rgba(31,111,235,0.15); color: #58a6ff; }
     .type-click      .log-badge { background: rgba(218,54,51,0.15);  color: #f78166; }
     .type-custom     .log-badge { background: rgba(46,160,67,0.15);  color: #3fb950; }
-    .type-other      .log-badge { background: rgba(139,148,158,0.1); color: #6e7681; }
-    .log-url { color: #6e7681; word-break: break-all; line-height: 1.35; }
-    .log-url .url-host { color: #8b949e; }
+    .type-other      .log-badge { background: rgba(139,148,158,0.15); color: #8b949e; }
+    .log-url { color: #8b949e; word-break: break-all; line-height: 1.35; }
+    .log-url .url-host { color: #c9d1d9; }
 
     /* ---- Celtra bg log (fixed at bottom) ---- */
     .bg-log-section {
@@ -306,13 +306,13 @@
       flex: 1;
       font-size: 0.68rem;
       font-weight: 600;
-      color: #484f58;
+      color: #8b949e;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .bg-count {
       background: #161b22;
-      color: #484f58;
+      color: #8b949e;
       font-size: 0.58rem;
       font-weight: 700;
       padding: 0.1rem 0.4rem;
@@ -322,18 +322,18 @@
     }
     .bg-clear {
       background: transparent; border: none;
-      color: #21262d; font-size: 0.65rem;
+      color: #6e7681; font-size: 0.65rem;
       cursor: pointer; font-family: inherit;
       padding: 0.1rem 0.3rem; border-radius: 3px;
       transition: color 0.15s;
     }
-    .bg-clear:hover { color: #484f58; }
+    .bg-clear:hover { color: #c9d1d9; }
 
     .bg-log-body {
       flex: 1; min-height: 0;
       overflow-y: auto;
       padding: 0.3rem 0.4rem;
-      background: #0a0e14;
+      background: #0d1117;
     }
     .bg-log-body::-webkit-scrollbar { width: 3px; }
     .bg-log-body::-webkit-scrollbar-thumb { background: #1c2128; }
@@ -344,15 +344,15 @@
       gap: 0 0.45rem;
       padding: 0.22rem 0.45rem;
       border-radius: 3px;
-      border-left: 2px solid #1c2128;
+      border-left: 2px solid #30363d;
       font-family: 'SFMono-Regular', Consolas, monospace;
       font-size: 0.63rem;
     }
-    .bg-entry:hover { background: #0f1318; }
-    .bg-entry .bg-time  { color: #21262d; }
-    .bg-entry .bg-badge { color: #30363d; font-weight: 600; text-transform: uppercase; font-size: 0.58rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bg-entry .bg-url   { color: #21262d; word-break: break-all; }
-    .bg-entry .bg-url .url-host { color: #30363d; }
+    .bg-entry:hover { background: #161b22; }
+    .bg-entry .bg-time  { color: #8b949e; }
+    .bg-entry .bg-badge { color: #c9d1d9; font-weight: 600; text-transform: uppercase; font-size: 0.58rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bg-entry .bg-url   { color: #8b949e; word-break: break-all; }
+    .bg-entry .bg-url .url-host { color: #c9d1d9; }
 
     /* ================================================================
        RIGHT PANEL — simulated page preview
@@ -392,7 +392,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: 2.5rem 2rem;
       gap: 0.6rem;
     }
@@ -403,11 +403,15 @@
       letter-spacing: 1.2px;
     }
     .ad-slot {
-      min-width: 300px;
+      width: 100%;
+      max-width: 480px;
       min-height: 250px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    }
+    .ad-slot iframe {
+      width: 100%;
+      min-height: 300px;
+      border: none;
+      display: block;
     }
   </style>
 </head>
@@ -825,39 +829,60 @@
     clearMainLog();
     clearBgLog();
 
-    // Replace all macros with our dummy tracker values before loading
     var macros = {
-      '\\[CLICK_URL\\]':         'https://example.com/click?advertiser=celtra-test&campaign=demo-rich-media',
-      '\\[IFA\\]':               'TESTIFA0-0000-0000-0000-000000000001',
-      '\\[PIXEL_EVENT_VIEW\\]':  'https://dummy-tracker.example.com/pixel.gif?event=VIEW&placement=test-placement-001',
-      '\\[CUSTOM_EVENT_1\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_1',
-      '\\[CUSTOM_EVENT_2\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_2',
-      '\\[CUSTOM_EVENT_3\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_3',
-      '\\[CUSTOM_EVENT_4\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_4',
-      '\\[CUSTOM_EVENT_5\\]':    'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_5',
+      '\\[CLICK_URL\\]':             'https://example.com/click?advertiser=celtra-test&campaign=demo-rich-media',
+      '\\[IFA\\]':                   'TESTIFA0-0000-0000-0000-000000000001',
+      '\\[PIXEL_EVENT_VIEW\\]':      'https://dummy-tracker.example.com/pixel.gif?event=VIEW&placement=test-placement-001',
+      '\\[CUSTOM_EVENT_1\\]':        'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_1',
+      '\\[CUSTOM_EVENT_2\\]':        'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_2',
+      '\\[CUSTOM_EVENT_3\\]':        'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_3',
+      '\\[CUSTOM_EVENT_4\\]':        'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_4',
+      '\\[CUSTOM_EVENT_5\\]':        'https://dummy-tracker.example.com/pixel.gif?event=CUSTOM_5',
       '\\[FORM_SUBMISSION_EVENT\\]': 'https://dummy-tracker.example.com/pixel.gif?event=FORM_SUBMISSION&action=Submit',
-      '\\[LAT\\]':               '37.7749',
-      '\\[LON\\]':               '-122.4194',
-      '\\[PLACEMENT\\]':         'test-placement-001',
-      '\\[SITEID\\]':            'test-site-001',
-      '\\[BID_ID\\]':            'bid-id-celtra-test-00001',
-      '\\[APP_BUNDLE_ID\\]':     'com.gamoshi.testapp'
+      '\\[LAT\\]':                   '37.7749',
+      '\\[LON\\]':                   '-122.4194',
+      '\\[PLACEMENT\\]':             'test-placement-001',
+      '\\[SITEID\\]':                'test-site-001',
+      '\\[BID_ID\\]':                'bid-id-celtra-test-00001',
+      '\\[APP_BUNDLE_ID\\]':         'com.gamoshi.testapp'
     };
     Object.keys(macros).forEach(function (pattern) {
       raw = raw.replace(new RegExp(pattern, 'g'), macros[pattern]);
     });
 
-    window.celtraHostPageLoadId = null;
-    window.celtraScriptIndex    = 0;
+    // Render ad in an isolated srcdoc iframe so Celtra cannot modify the parent
+    // page's DOM or escape the ad area. srcdoc iframes are same-origin, so the
+    // embedded interceptor can call window.parent._celtraCapture directly.
+    var interceptor = [
+      '(function(){',
+      'var MD=["dummy-tracker.example.com"];',
+      'var CT=["track.celtra.com","ads.celtra.com"];',
+      'function sc(u){',
+      '  if(!u||typeof u!=="string")return false;',
+      '  for(var i=0;i<MD.length;i++){if(u.indexOf(MD[i])!==-1)return true;}',
+      '  for(var j=0;j<CT.length;j++){if(u.indexOf(CT[j])!==-1)return true;}',
+      '  return u.indexOf("example.com")!==-1&&u.indexOf("/click")!==-1;',
+      '}',
+      'var d=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");',
+      'if(d&&d.set){Object.defineProperty(HTMLImageElement.prototype,"src",{get:d.get,set:function(v){if(sc(v)){try{window.parent._celtraCapture("pixel",v);}catch(e){}}d.set.call(this,v);},configurable:true});}',
+      'var ox=XMLHttpRequest.prototype.open;',
+      'XMLHttpRequest.prototype.open=function(m,u){if(sc(u)){try{window.parent._celtraCapture("xhr",u);}catch(e){}}return ox.apply(this,arguments);};',
+      'if(window.fetch){var of=window.fetch;window.fetch=function(r,i){var u=typeof r==="string"?r:(r&&r.url)||"";if(sc(u)){try{window.parent._celtraCapture("fetch",u);}catch(e){}}return of.apply(this,arguments);};}',
+      'if(navigator.sendBeacon){var ob=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(u,d){if(sc(u)){try{window.parent._celtraCapture("beacon",u);}catch(e){}}return ob(u,d);};}',
+      'var ow=window.open;window.open=function(u,t,f){if(u&&sc(u)){try{window.parent._celtraCapture("click",u);}catch(e){} return null;}return ow?ow.apply(window,arguments):null;};',
+      '}());'
+    ].join('');
+
+    var srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<style>body{margin:0;padding:0;overflow:hidden;}</style>' +
+      '<script>' + interceptor + '<\/script>' +
+      '</head><body>' + raw + '</body></html>';
 
     var slot = document.getElementById('ad-slot-inner');
-    slot.innerHTML = raw;
-
-    slot.querySelectorAll('script').forEach(function (old) {
-      var s = document.createElement('script');
-      if (old.src) { s.src = old.src; } else { s.textContent = old.textContent; }
-      old.parentNode.replaceChild(s, old);
-    });
+    slot.innerHTML = '';
+    var iframe = document.createElement('iframe');
+    iframe.srcdoc = srcdoc;
+    slot.appendChild(iframe);
 
     status.textContent = 'Loaded at ' + new Date().toTimeString().slice(0, 8);
     document.getElementById('tag-panel').removeAttribute('open');
