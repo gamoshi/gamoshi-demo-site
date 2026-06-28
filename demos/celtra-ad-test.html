@@ -860,6 +860,7 @@
     // embedded interceptor can call window.parent._celtraCapture directly.
     var interceptor = [
       '(function(){',
+      'if(window._celtraMonitored)return;',
       'window._celtraMonitored=true;',
       'var MD=["dummy-tracker.example.com"];',
       'var CT=["track.celtra.com","ads.celtra.com"];',
