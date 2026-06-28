@@ -22,6 +22,8 @@ TTL=300                         # 5 minutes
 FILE=""
 CUSTOMERS=()
 NO_INVALIDATE=false
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MRAID_STUB="${SCRIPT_DIR}/demos/mraid.js"
 
 # ---------------------------------------------------------------------------
 # Usage
@@ -38,6 +40,7 @@ Optional:
   -t, --ttl        SECONDS           Cache-Control max-age in seconds (default: 300 = 5 min)
   -d, --cf-dist-id DISTRIBUTION_ID  CloudFront distribution ID (default: E3UM5KAY62BKZF)
       --no-invalidate                Skip CloudFront invalidation (rely on TTL only)
+      --no-mraid                     Skip auto-deploying mraid.js alongside HTML files
   -h, --help                         Show this help and exit
 
 Examples:
@@ -57,6 +60,7 @@ while [[ $# -gt 0 ]]; do
     -t|--ttl)           TTL="$2";                                    shift 2 ;;
     -d|--cf-dist-id)    CF_DIST_ID="$2";                             shift 2 ;;
     --no-invalidate)    NO_INVALIDATE=true;                          shift   ;;
+    --no-mraid)         MRAID_STUB="";                               shift   ;;
     -h|--help)          usage; exit 0 ;;
     *) echo "[ERROR] Unknown option: $1" >&2; usage; exit 1 ;;
   esac
@@ -96,6 +100,9 @@ echo "  Invalidate: $([[ "$NO_INVALIDATE" == true ]] && echo "no (rely on TTL)" 
 echo "============================================================"
 echo ""
 
+IS_HTML=false
+[[ "$FILENAME" == *.html ]] && IS_HTML=true
+
 for CID in "${CUSTOMERS[@]}"; do
   CID="${CID// /}"   # strip any accidental spaces
   S3_KEY="demo-pages/customers/${CID}/${FILENAME}"
@@ -105,8 +112,17 @@ for CID in "${CUSTOMERS[@]}"; do
     --content-type "text/html" \
     --cache-control "$CACHE_CONTROL"
   echo "[✓] customer ${CID} uploaded"
-
   INVALIDATION_PATHS+=("/${S3_KEY}")
+
+  # Auto-deploy mraid.js alongside every HTML file so MRAID v3 tags work
+  if [[ "$IS_HTML" == true && -n "$MRAID_STUB" && -f "$MRAID_STUB" ]]; then
+    MRAID_KEY="demo-pages/customers/${CID}/mraid.js"
+    aws s3 cp "$MRAID_STUB" "s3://${BUCKET}/${MRAID_KEY}" \
+      --content-type "application/javascript" \
+      --cache-control "$CACHE_CONTROL"
+    echo "[✓] customer ${CID} mraid.js"
+    INVALIDATION_PATHS+=("/${MRAID_KEY}")
+  fi
 done
 
 # ---------------------------------------------------------------------------
