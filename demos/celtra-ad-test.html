@@ -409,7 +409,7 @@
     }
     .ad-slot iframe {
       width: 100%;
-      min-height: 300px;
+      height: 600px;
       border: none;
       display: block;
     }
@@ -850,11 +850,17 @@
       raw = raw.replace(new RegExp(pattern, 'g'), macros[pattern]);
     });
 
+    // Some Celtra tags ship with \[ and \] in onerror JS (property access brackets).
+    // Lenient HTML parsers accept this; srcdoc iframes are stricter and throw
+    // "Invalid or unexpected token". Unescape before injection.
+    raw = raw.replace(/\\\[/g, '[').replace(/\\]/g, ']');
+
     // Render ad in an isolated srcdoc iframe so Celtra cannot modify the parent
     // page's DOM or escape the ad area. srcdoc iframes are same-origin, so the
     // embedded interceptor can call window.parent._celtraCapture directly.
     var interceptor = [
       '(function(){',
+      'window._celtraMonitored=true;',
       'var MD=["dummy-tracker.example.com"];',
       'var CT=["track.celtra.com","ads.celtra.com"];',
       'function sc(u){',
@@ -873,9 +879,43 @@
       '}());'
     ].join('');
 
+    // Minimal MRAID 2.0 stub — v3 tags require window.mraid; without it
+    // mraid-ad.js waits for a 'ready' event that never fires and renders nothing.
+    var mraidStub = [
+      '(function(){',
+      'var L={},S="default";',
+      'function fire(e,d){(L[e]||[]).forEach(function(f){try{f(d);}catch(x){}});}',
+      'window.mraid={',
+      'getVersion:function(){return"2.0";},',
+      'getState:function(){return S;},',
+      'isViewable:function(){return true;},',
+      'getPlacementType:function(){return"inline";},',
+      'addEventListener:function(e,f){if(!L[e])L[e]=[];L[e].push(f);},',
+      'removeEventListener:function(e,f){if(L[e])L[e]=L[e].filter(function(l){return l!==f;});},',
+      'expand:function(){S="expanded";fire("stateChange",S);},',
+      'close:function(){S="default";fire("stateChange",S);},',
+      'open:function(u){try{window.parent._celtraCapture("click",u);}catch(x){}},',
+      'useCustomClose:function(){},',
+      'getExpandProperties:function(){return{width:320,height:480,useCustomClose:false,isModal:true};},',
+      'setExpandProperties:function(){},',
+      'getMaxSize:function(){return{width:screen.width,height:screen.height};},',
+      'getScreenSize:function(){return{width:screen.width,height:screen.height};},',
+      'getDefaultPosition:function(){return{x:0,y:0,width:320,height:50};},',
+      'getCurrentPosition:function(){return{x:0,y:0,width:320,height:50};},',
+      'supports:function(f){return["sms","tel","calendar","storePicture","inlineVideo"].indexOf(f)!==-1;},',
+      'setOrientationProperties:function(){},',
+      'getOrientationProperties:function(){return{allowOrientationChange:true,forceOrientation:"none"};}',
+      '};',
+      // State is already 'default' so most Celtra creatives render immediately,
+      // but fire ready + viewableChange for any ad that checks the event path.
+      'setTimeout(function(){fire("ready");fire("viewableChange",true);},50);',
+      '}());'
+    ].join('');
+
     var srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-      '<style>body{margin:0;padding:0;overflow:hidden;}</style>' +
+      '<style>body{margin:0;padding:0;overflow:visible;}</style>' +
       '<script>' + interceptor + '<\/script>' +
+      '<script>' + mraidStub + '<\/script>' +
       '</head><body>' + raw + '</body></html>';
 
     var slot = document.getElementById('ad-slot-inner');
@@ -883,6 +923,15 @@
     var iframe = document.createElement('iframe');
     iframe.srcdoc = srcdoc;
     slot.appendChild(iframe);
+
+    // Auto-resize iframe to fit Celtra creative (loads async from CDN after srcdoc parses)
+    var resizeTimer = setInterval(function () {
+      try {
+        var h = iframe.contentDocument.documentElement.scrollHeight;
+        if (h > 10) iframe.style.height = h + 'px';
+      } catch (e) {}
+    }, 300);
+    setTimeout(function () { clearInterval(resizeTimer); }, 10000);
 
     status.textContent = 'Loaded at ' + new Date().toTimeString().slice(0, 8);
     document.getElementById('tag-panel').removeAttribute('open');
